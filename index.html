@@ -35,92 +35,11 @@
 </head>
 <body class="min-h-screen flex flex-col text-slate-800">
 
-    <!-- Mock DB State Storage (in-memory simulation) -->
-    <script>
-        // 초기 시뮬레이션용 데이터셋 정의 (학생 번호 추가 및 비매칭 테스트용 유저 세팅)
-        const DEFAULT_USERS = [
-            { id: "student1", pw: "1234", type: "student", name: "김민우", school: "서울초등학교", grade: "5", class: "3", number: "12", approved: true },
-            { id: "student2", pw: "1234", type: "student", name: "이서연", school: "서울초등학교", grade: "5", class: "3", number: "5", approved: true },
-            { id: "student3", pw: "1234", type: "student", name: "박준혁", school: "한국중학교", grade: "1", class: "2", number: "18", approved: true }, // 매칭 교사 없음 -> 달력 차단됨
-            { id: "teacher1", pw: "1234", type: "teacher", name: "한가람", school: "서울초등학교", role: "homeroom", grade: "5", class: "3", email: "teacher1@school.ed.kr", approved: true },
-            { id: "teacher2", pw: "1234", type: "teacher", name: "정다은", school: "서울초등학교", role: "specialist", grade: "6", class: "", email: "daeun@school.ed.kr", approved: false }, // 미승인 상태
-            { id: "WD2026", pw: "osm@123456", type: "admin", name: "최고관리자", approved: true }
-        ];
-
-        const DEFAULT_DIARY = {
-            // key format: "userId_YYYY-MM-DD"
-            "student1_2026-06-15": {
-                todos: [
-                    { id: 1, text: "아침 30분 일찍 일어나서 스트레칭하기", completed: true, rating: 5 },
-                    { id: 2, text: "수학 익힘책 5페이지 풀기", completed: true, rating: 4 },
-                    { id: 3, text: "하루 3번 이상 친구 칭찬하기", completed: false, rating: 3 }
-                ],
-                reflection: "오늘 스트레칭을 하니 몸이 가벼웠다. 칭찬은 2번밖에 못 해서 내일은 더 신경 써야겠다."
-            },
-            "student1_2026-06-28": {
-                todos: [
-                    { id: 4, text: "영어 단어 10개 외우기", completed: true, rating: 5 },
-                    { id: 5, text: "스스로 책상 정리하기", completed: false, rating: 0 }
-                ],
-                reflection: "영어 단어를 다 외워서 뿌듯하다! 내일은 꼭 책상 정리를 완벽하게 해야지."
-            },
-            "student1_2026-06-29": {
-                todos: [
-                    { id: 6, text: "부모님 심부름 돕기", completed: true, rating: 5 },
-                    { id: 7, text: "일기 밀리지 않고 쓰기", completed: true, rating: 5 },
-                    { id: 8, text: "책 20페이지 읽기", completed: false, rating: 4 },
-                    { id: 9, text: "스쿼트 20회 하기", completed: false, rating: 3 }
-                ],
-                reflection: "오늘 하루의 작은 도전들을 착실하게 지켜냈다. 자신감이 점점 차오르는 것이 느껴진다!"
-            },
-            "student2_2026-06-29": {
-                todos: [
-                    { id: 11, text: "줄넘기 100개 가볍게 성공하기", completed: true, rating: 4 },
-                    { id: 12, text: "오답 노트 정리 마치기", completed: true, rating: 5 }
-                ],
-                reflection: "점점 줄넘기 할 때 숨이 덜 찬다. 신체 효능감과 학습 효능감이 균형을 이루어 기분이 아주 좋다."
-            }
-        };
-
-        const DEFAULT_BIG_GOALS = {
-            // key format: "userId_YYYY-MM"
-            "student1_2026-06": [
-                { id: 101, text: "체력 기르기: 매일 스트레칭과 운동 소홀히 하지 않기" },
-                { id: 102, text: "독서 습관 형성: 한 달 동안 책 2권 완독하기" }
-            ],
-            "student2_2026-06": [
-                { id: 103, text: "학급 규칙 모범적으로 솔선수범하기" }
-            ]
-        };
-
-        const DEFAULT_NOTICES = [
-            { id: 1, title: "🐢 '작은 성공' 다이어리 시작을 축하합니다!", content: "하루의 작은 성공들이 모여 큰 나를 만듭니다. 매일의 도전을 기록해 보세요! 공식 룰북 참고: https://www.ninja-goals-rules.org", date: "2026-06-01", author: "관리자" },
-            { id: 2, title: "📢 담임 교사 매칭 필수 안내", content: "본 다이어리는 학교 소속 담임 선생님과 실시간 매칭이 완료된 학생에 한해 다이어리 달력 조회가 가능합니다. 매칭 가이드 영상: https://youtu.be/dummy-match-guide", date: "2026-06-10", author: "관리자" }
-        ];
-
-        const DEFAULT_CHATS = [
-            { from: "teacher1", to: "student1", text: "민우야, 어제 도전 목표를 훌륭히 달성했구나! 정말 자랑스러워 🐢", timestamp: "2026-06-29 10:30" },
-            { from: "student1", to: "teacher1", text: "감사합니다 선생님! 매일 매일 성공 인증 도장 깨는 기분이에요!", timestamp: "2026-06-29 11:15" },
-            { from: "teacher1", to: "student2", text: "서연이도 오답노트 습관이 참 좋아졌구나. 성찰 일지를 꾸준히 써보렴!", timestamp: "2026-06-29 12:00" }
-        ];
-
-        // 로컬스토리지 대용 가상 메모리 스토리지 초기화
-        if (!localStorage.getItem('ninja_diary_initialized')) {
-            localStorage.setItem('ninja_users', JSON.stringify(DEFAULT_USERS));
-            localStorage.setItem('ninja_diary', JSON.stringify(DEFAULT_DIARY));
-            localStorage.setItem('ninja_big_goals', JSON.stringify(DEFAULT_BIG_GOALS));
-            localStorage.setItem('ninja_notices', JSON.stringify(DEFAULT_NOTICES));
-            localStorage.setItem('ninja_chats', JSON.stringify(DEFAULT_CHATS));
-            localStorage.setItem('ninja_diary_initialized', 'true');
-        }
-    </script>
-
     <!-- Top Navigation Bar -->
     <header class="bg-emerald-600 text-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <!-- Ninja Turtle Inspired Logo & Title -->
+            <!-- Logo & Title -->
             <div class="flex items-center space-x-3 cursor-pointer" onclick="goHome()">
-                <!-- 멋지게 꾸민 닌자 거북이 SVG 로고 (입체 얼굴, 마스크 리본 휘날림, 익살맞은 눈과 미소) -->
                 <div class="w-12 h-12 relative flex items-center justify-center filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.15)]">
                     <svg viewBox="0 0 100 100" class="w-full h-full">
                         <defs>
@@ -134,27 +53,17 @@
                                 <stop offset="100%" stop-color="#991b1b" />
                             </linearGradient>
                         </defs>
-                        <!-- 얼굴 베이스 원 -->
                         <circle cx="50" cy="50" r="42" fill="url(#turtleHeadGrad)" stroke="#14532d" stroke-width="3" />
-                        
-                        <!-- 휘날리는 안대 리본 매듭 -->
                         <path d="M12 40 C 2 35, 1 20, 8 15 C 13 18, 15 28, 15 38 Z" fill="url(#maskGrad)" stroke="#7f1d1d" stroke-width="1.5" />
                         <path d="M13 46 C 3 48, 0 60, 5 68 C 10 65, 12 55, 14 46 Z" fill="url(#maskGrad)" stroke="#7f1d1d" stroke-width="1.5" />
                         <circle cx="14" cy="42" r="4" fill="#ef4444" stroke="#7f1d1d" stroke-width="1" />
-
-                        <!-- 가로형 붉은색 마스크 띠 -->
                         <path d="M9 42 C 20 33, 80 33, 91 42 C 92 48, 92 48, 91 54 C 80 45, 20 45, 9 54 Z" fill="url(#maskGrad)" stroke="#7f1d1d" stroke-width="2" />
-
-                        <!-- 닌자 거북이의 눈 -->
                         <ellipse cx="36" cy="44" rx="9" ry="6" fill="#ffffff" stroke="#000000" stroke-width="1.5" transform="rotate(-5, 36, 44)" />
                         <ellipse cx="64" cy="44" rx="9" ry="6" fill="#ffffff" stroke="#000000" stroke-width="1.5" transform="rotate(5, 64, 44)" />
-
                         <circle cx="37" cy="44" r="3.5" fill="#000000" />
                         <circle cx="63" cy="44" r="3.5" fill="#000000" />
                         <circle cx="35.5" cy="42.5" r="1.2" fill="#ffffff" />
                         <circle cx="61.5" cy="42.5" r="1.2" fill="#ffffff" />
-
-                        <!-- 비대칭 익살맞은 미소 -->
                         <path d="M 33 69 C 43 78, 57 78, 65 67" fill="none" stroke="#14532d" stroke-width="4" stroke-linecap="round" />
                         <path d="M 64 64 L 68 69" fill="none" stroke="#14532d" stroke-width="3" stroke-linecap="round" />
                         <path d="M 28 65 C 29 69, 31 71, 34 70" fill="none" stroke="#14532d" stroke-width="2" stroke-linecap="round" />
@@ -163,19 +72,17 @@
                 <div>
                     <h1 class="text-xl font-black tracking-tight flex items-center gap-1.5">
                         작은 성공, 도전하는 나!
-                        <span class="text-xs bg-amber-400 text-emerald-950 font-bold px-2 py-0.5 rounded-full shadow-sm">성찰 다이어리</span>
+                        <span class="text-xs bg-amber-400 text-emerald-950 font-bold px-2 py-0.5 rounded-full shadow-sm">성찰 다이어리 (클라우드)</span>
                     </h1>
                 </div>
             </div>
 
             <!-- User Auth Info Bar -->
-            <div id="auth-status-bar" class="flex items-center space-x-4">
-                <!-- JS Inject -->
-            </div>
+            <div id="auth-status-bar" class="flex items-center space-x-4"></div>
         </div>
     </header>
 
-    <!-- ==================== LOCK SCREEN (Before Login or Unmatched) ==================== -->
+    <!-- ==================== LOCK SCREEN ==================== -->
     <div id="lock-screen" class="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-xl mx-auto my-12 bg-white rounded-3xl shadow-xl border border-slate-100">
         <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 mb-6 text-4xl shadow-inner border border-emerald-100 relative overflow-hidden">
             <svg viewBox="0 0 100 100" class="w-16 h-16">
@@ -193,7 +100,7 @@
             성찰 다이어리에 오신 것을 환영합니다!
         </h2>
         <p id="lock-desc" class="text-sm text-slate-500 leading-relaxed mb-8 whitespace-pre-line">
-            다이어리 기능(달력, 목표 관리, 피드백)을 안전하게 이용하시려면
+            다이어리 기능(달력, 목표 관리, 피드백)을 동기화하여 안전하게 이용하시려면
             로그인 및 교사 매칭 승인이 필요합니다.
         </p>
         
@@ -207,7 +114,7 @@
         </div>
     </div>
 
-    <!-- ==================== ADMIN DASHBOARD WRAPPER (Persistent on Screen for Admin) ==================== -->
+    <!-- ==================== ADMIN DASHBOARD WRAPPER ==================== -->
     <div id="admin-dashboard-wrapper" class="hidden flex-1 max-w-7xl w-full mx-auto p-4 flex flex-col">
         <div class="bg-slate-900 text-white p-6 rounded-3xl mb-6 shadow-md flex justify-between items-center">
             <div class="flex items-center space-x-3">
@@ -216,11 +123,11 @@
                 </div>
                 <div>
                     <h2 class="text-lg font-black tracking-tight text-amber-400">시스템 총괄 관리 콘솔 (WD2026)</h2>
-                    <p class="text-xs text-slate-300">신규 교사 가입을 승인하거나, 회원을 관리/삭제할 수 있는 관리자 전용 구역입니다.</p>
+                    <p class="text-xs text-slate-300">신규 가입 교사를 승인하고, 회원을 통합 관리하는 전용 관리 센터입니다.</p>
                 </div>
             </div>
             <div class="bg-slate-800 border border-slate-700 text-xs text-slate-300 px-4 py-2 rounded-xl">
-                접속 권한: <strong class="text-emerald-400">최고관리자 (gRPC OK)</strong>
+                접속 상태: <strong id="admin-connection-status" class="text-emerald-400">클라우드 데이터 원격 동기화 중</strong>
             </div>
         </div>
 
@@ -255,7 +162,6 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- 1. Pending Teachers -->
             <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col h-[400px]">
                 <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
                     <i class="fa-solid fa-clipboard-check text-indigo-500"></i>
@@ -271,19 +177,16 @@
                                     <th class="px-3 py-2.5 font-bold text-slate-500 text-right">기능</th>
                                 </tr>
                             </thead>
-                            <tbody id="admin-main-pending-teachers" class="divide-y divide-slate-100">
-                                <!-- Dynamic -->
-                            </tbody>
+                            <tbody id="admin-main-pending-teachers" class="divide-y divide-slate-100"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. Active Members Management -->
             <div class="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col h-[400px]">
                 <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
                     <i class="fa-solid fa-users-gear text-red-500"></i>
-                    전체 학생 및 승인 교사 강제 탈퇴 조치
+                    전체 학생 및 승인 교사 관리
                 </h3>
                 <div class="flex-1 overflow-y-auto pr-1">
                     <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
@@ -296,9 +199,7 @@
                                     <th class="px-3 py-2.5 font-bold text-slate-500 text-right">관리</th>
                                 </tr>
                             </thead>
-                            <tbody id="admin-main-all-users" class="divide-y divide-slate-100">
-                                <!-- Dynamic -->
-                            </tbody>
+                            <tbody id="admin-main-all-users" class="divide-y divide-slate-100"></tbody>
                         </table>
                     </div>
                 </div>
@@ -306,10 +207,10 @@
         </div>
     </div>
 
-    <!-- ==================== MAIN WORKSPACE (For Students & Teachers) ==================== -->
+    <!-- ==================== MAIN WORKSPACE ==================== -->
     <div id="main-dashboard-wrapper" class="hidden flex-1 flex flex-col p-4">
         
-        <!-- ==================== TEACHER CONTROL BAR (Visible to Matched Teachers only) ==================== -->
+        <!-- TEACHER CONTROL BAR -->
         <div id="teacher-control-bar" class="hidden max-w-7xl w-full mx-auto bg-indigo-50 border border-indigo-100 rounded-3xl p-5 mb-6 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold shadow-md">
@@ -317,15 +218,13 @@
                 </div>
                 <div>
                     <h3 class="font-bold text-slate-800 text-sm">교사 전용 모니터링 패널</h3>
-                    <p class="text-[11px] text-slate-500">학생을 지정하여 성찰 다이어리 내용(달력, 목표, 자기효능감)을 실시간 모니터하기.</p>
+                    <p class="text-[11px] text-slate-500">선택한 학생의 달력 데이터 및 자기효능감을 실시간으로 동기화하여 검토합니다.</p>
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
                 <div class="flex items-center space-x-2 flex-1 md:flex-initial">
                     <span class="text-xs font-bold text-indigo-900 whitespace-nowrap">관찰 학생 선택:</span>
-                    <select id="dashboard-student-selector" onchange="handleTeacherSelectStudent()" class="w-full md:w-56 px-3.5 py-2.5 bg-white border border-indigo-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs cursor-pointer">
-                        <!-- Dynamic Options -->
-                    </select>
+                    <select id="dashboard-student-selector" onchange="handleTeacherSelectStudent()" class="w-full md:w-56 px-3.5 py-2.5 bg-white border border-indigo-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs cursor-pointer"></select>
                 </div>
                 <button onclick="openChatModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-sm flex items-center gap-2">
                     <i class="fa-solid fa-comments text-sm"></i> 1:1 대화 및 피드백 작성
@@ -334,27 +233,23 @@
         </div>
 
         <main class="flex-1 max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            <!-- ==================== LEFT BAR (4 cols) ==================== -->
+            <!-- LEFT BAR -->
             <aside class="lg:col-span-4 space-y-6 flex flex-col">
-                
-                <!-- 1. 공지사항 창 -->
+                <!-- 1. 공지사항 -->
                 <section class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex flex-col h-[230px]">
                     <div class="flex justify-between items-center mb-3">
                         <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-bullhorn text-emerald-500"></i>
+                            <i class="fa-solid fa-bell text-emerald-500"></i>
                             알림 및 공지사항
                         </h2>
                         <button id="add-notice-btn" onclick="openNoticeModal()" class="hidden text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-2 py-1 rounded font-medium transition">
                             + 글쓰기
                         </button>
                     </div>
-                    <div id="notice-container" class="space-y-3 overflow-y-auto flex-1 pr-1 text-sm text-slate-600">
-                        <!-- Dynamic -->
-                    </div>
+                    <div id="notice-container" class="space-y-3 overflow-y-auto flex-1 pr-1 text-sm text-slate-600"></div>
                 </section>
 
-                <!-- 2. 월별 큰 목표 창 (학생들이 자유롭게 쓰고 지우는 영역) -->
+                <!-- 2. 이달의 큰 목표 -->
                 <section class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex flex-col h-[240px]">
                     <div class="flex justify-between items-center mb-2">
                         <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
@@ -364,7 +259,6 @@
                         <span id="big-goals-mode-badge" class="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded-full">자유형</span>
                     </div>
                     
-                    <!-- Write input (Hidden in teacher mode via JS) -->
                     <div id="new-big-goal-form-area" class="flex gap-1.5 mb-2.5">
                         <input type="text" id="new-big-goal-input" placeholder="이번 달에 꼭 이루고 싶은 큰 목표!" class="flex-1 px-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500">
                         <button onclick="addBigGoal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition">
@@ -372,13 +266,10 @@
                         </button>
                     </div>
 
-                    <!-- Goals list wrapper -->
-                    <div id="big-goals-list" class="flex-1 overflow-y-auto space-y-2 pr-1 text-xs">
-                        <!-- Dynamic Goals inside -->
-                    </div>
+                    <div id="big-goals-list" class="flex-1 overflow-y-auto space-y-2 pr-1 text-xs"></div>
                 </section>
 
-                <!-- 3. 나의 자기효능감 그래프 창 (가로형 누적 평균 그래프) -->
+                <!-- 3. 자기효능감 그래프 -->
                 <section class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex flex-col flex-1 min-h-[250px]">
                     <div class="mb-4">
                         <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
@@ -389,7 +280,6 @@
                     </div>
                     
                     <div class="flex-1 flex flex-col justify-center space-y-5">
-                        <!-- Overall Average Efficacy Card -->
                         <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 text-center">
                             <p class="text-xs text-slate-500 font-medium mb-1">전체 평균 자기효능감 점수</p>
                             <div class="flex items-center justify-center space-x-2">
@@ -397,15 +287,10 @@
                                 <span class="text-slate-300">/</span>
                                 <span class="text-sm font-semibold text-slate-400">5.0</span>
                             </div>
-                            <!-- Mini stars under total -->
-                            <div id="efficacy-star-rating-icons" class="text-amber-400 text-xs mt-1.5 space-x-0.5">
-                                <!-- Dynamic Stars -->
-                            </div>
+                            <div id="efficacy-star-rating-icons" class="text-amber-400 text-xs mt-1.5 space-x-0.5"></div>
                         </div>
 
-                        <!-- Horizontal Bar Graphic representation -->
                         <div class="space-y-3">
-                            <!-- Efficacy Progress Bar -->
                             <div>
                                 <div class="flex justify-between text-xs font-semibold text-slate-600 mb-1.5">
                                     <span>자기효능감 충전도</span>
@@ -416,56 +301,38 @@
                                 </div>
                             </div>
 
-                            <!-- Text helper evaluation feedback -->
                             <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 text-[11px] text-amber-800 leading-relaxed">
                                 <i class="fa-solid fa-circle-info mr-1"></i>
-                                <span id="efficacy-level-text">도전 목표를 성공 상태로 전환하고 별표 자기효능감을 체크하면 성찰 결과가 여기에 차오릅니다!</span>
+                                <span id="efficacy-level-text">소감을 기록하고 효능감을 확인하세요!</span>
                             </div>
                         </div>
                     </div>
                 </section>
-
             </aside>
 
-            <!-- ==================== RIGHT CALENDAR (8 cols) ==================== -->
+            <!-- RIGHT CALENDAR -->
             <main class="lg:col-span-8 flex flex-col space-y-6">
-                
-                <!-- Calendar Dashboard Card -->
                 <section class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col flex-1">
-                    
-                    <!-- Calendar Controller Area -->
                     <div class="flex justify-between items-center mb-6">
-                        <!-- Prev/Next Controls -->
                         <div class="flex items-center space-x-3">
                             <button onclick="changeMonth(-1)" class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 transition text-slate-600">
                                 <i class="fa-solid fa-chevron-left text-sm"></i>
                             </button>
-                            <h2 id="calendar-month-year" class="text-xl font-bold text-slate-800 tracking-tight min-w-[120px] text-center">
-                                2026년 6월
-                            </h2>
+                            <h2 id="calendar-month-year" class="text-xl font-bold text-slate-800 tracking-tight min-w-[120px] text-center">2026년 6월</h2>
                             <button onclick="changeMonth(1)" class="w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 transition text-slate-600">
                                 <i class="fa-solid fa-chevron-right text-sm"></i>
                             </button>
                         </div>
 
-                        <!-- Right Controls (Interactive Bell Icon & Matching Status) -->
                         <div class="flex items-center space-x-3">
-                            <!-- Teacher Matching Indicator (Interactive) -->
-                            <div id="matching-badge-container">
-                                <!-- Dynamic Badge matching state -->
-                            </div>
-
-                            <!-- 1:1 Communication Bell Trigger Icon -->
+                            <div id="matching-badge-container"></div>
                             <button id="feedback-bell" onclick="openChatModal()" class="relative p-2.5 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-full transition-all duration-300 transform hover:scale-110 shadow-sm border border-amber-200 flex items-center justify-center">
                                 <i class="fa-solid fa-bell text-lg animate-bounce"></i>
-                                <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-[10px] text-white font-bold rounded-full flex items-center justify-center border-2 border-white shadow">
-                                    1
-                                </span>
+                                <span class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-[10px] text-white font-bold rounded-full flex items-center justify-center border-2 border-white shadow">1</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Calendar Headings -->
                     <div class="grid grid-cols-7 gap-1 text-center mb-2 font-bold text-xs tracking-wider text-slate-400">
                         <div class="text-red-500">일</div>
                         <div>월</div>
@@ -476,30 +343,22 @@
                         <div class="text-indigo-600">토</div>
                     </div>
 
-                    <!-- Calendar Grid Container -->
-                    <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 flex-1 min-h-[480px]">
-                        <!-- Dynamic calendar slots injected here -->
-                    </div>
-
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 flex-1 min-h-[480px]"></div>
                 </section>
-
             </main>
-
         </main>
     </div>
 
     <!-- Footer -->
     <footer class="bg-white border-t border-slate-200 text-center py-4 text-xs text-slate-400 mt-6 font-medium">
-        <p>© 2026 작은 성공, 도전하는 나! 성찰 다이어리. Made with 🐢 Ninja Spirits.</p>
+        <p>© 2026 작은 성공, 도전하는 나! 성찰 다이어리. Powered by Cloud Database 🐢</p>
     </footer>
 
     <!-- ==================== MODALS ==================== -->
 
-    <!-- 1. AUTH MODAL (Login / Register Tabs) -->
+    <!-- AUTH MODAL -->
     <div id="auth-modal" class="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto transform transition-all p-6">
-            
-            <!-- Tab Headers -->
             <div class="flex border-b border-slate-200 mb-6">
                 <button id="tab-login-btn" onclick="toggleAuthTab('login')" class="flex-1 pb-3 text-center font-bold text-emerald-600 border-b-2 border-emerald-600 transition">로그인</button>
                 <button id="tab-register-btn" onclick="toggleAuthTab('register')" class="flex-1 pb-3 text-center font-semibold text-slate-400 hover:text-slate-600 transition">회원가입</button>
@@ -515,14 +374,11 @@
                     <label class="block text-xs font-semibold text-slate-500 mb-1">비밀번호</label>
                     <input type="password" id="login-pw" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm" placeholder="비밀번호를 입력하세요">
                 </div>
-                <button onclick="handleLogin()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition text-sm shadow-sm">
-                    로그인 완료
-                </button>
+                <button onclick="handleLogin()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition text-sm shadow-sm">로그인 완료</button>
             </div>
 
             <!-- Register Section -->
             <div id="section-register" class="space-y-4 hidden">
-                <!-- User Type Selector -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-2">가입 유형 선택</label>
                     <div class="grid grid-cols-2 gap-2">
@@ -537,7 +393,6 @@
                     </div>
                 </div>
 
-                <!-- Shared Credentials -->
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">희망 ID</label>
@@ -549,7 +404,6 @@
                     </div>
                 </div>
 
-                <!-- Shared Profile Info -->
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">학교명</label>
@@ -561,7 +415,7 @@
                     </div>
                 </div>
 
-                <!-- STUDENT Fields (with "Student Number" added) -->
+                <!-- STUDENT Fields -->
                 <div id="fields-student" class="space-y-3">
                     <div class="grid grid-cols-3 gap-2">
                         <div>
@@ -604,18 +458,14 @@
                     </div>
                 </div>
 
-                <button onclick="handleRegister()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition text-sm shadow-sm">
-                    가입 신청하기
-                </button>
+                <button onclick="handleRegister()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition text-sm shadow-sm">가입 신청하기</button>
             </div>
-
         </div>
     </div>
 
-    <!-- 2. DIARY DETAIL MODAL (Write/View Todos and Reflection) -->
-    <div id="diary-modal" class="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 font-sans">
+    <!-- DIARY DETAIL MODAL -->
+    <div id="diary-modal" class="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto transform transition-all p-6">
-            
             <div class="flex justify-between items-center mb-5">
                 <div class="flex items-center space-x-2">
                     <span id="diary-modal-icon" class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">🐢</span>
@@ -626,59 +476,42 @@
                 </button>
             </div>
 
-            <!-- 관찰하는 교사 전용 읽기전용 배너 알람 -->
             <div id="modal-teacher-view-banner" class="hidden bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-4 text-xs text-indigo-800 flex items-center gap-2">
                 <i class="fa-solid fa-circle-info text-indigo-500 text-sm"></i>
                 <span><strong>조회 모드:</strong> 학생이 설정한 성찰일지 기록을 읽고 있습니다. (수정 불가)</span>
             </div>
 
             <div class="space-y-6">
-                <!-- 1. Goals list -->
                 <div>
                     <div class="flex justify-between items-center mb-2">
                         <label class="text-sm font-bold text-slate-700">📌 오늘 도전할 작은 목표</label>
                         <span id="diary-modal-hint-text" class="text-xs text-slate-400 font-medium">클릭하여 완료 상태로 전환</span>
                     </div>
 
-                    <!-- Input layout (Hidden in teacher review mode) -->
                     <div id="new-todo-input-area" class="flex gap-2 mb-3">
                         <input type="text" id="new-todo-text" placeholder="도전 목표를 적어주세요!" class="flex-1 px-4 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
-                        <button onclick="addTodoToDate()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-xl text-sm transition">
-                            추가
-                        </button>
+                        <button onclick="addTodoToDate()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-xl text-sm transition">추가</button>
                     </div>
 
-                    <!-- Todos List -->
-                    <div id="modal-todos-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
-                        <!-- Dynamic Todos -->
-                    </div>
+                    <div id="modal-todos-list" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
                 </div>
 
-                <!-- 2. Daily Reflection Content -->
                 <div class="border-t border-slate-100 pt-4">
                     <label class="block text-sm font-bold text-slate-700 mb-2">💬 오늘 하루 성찰 소감</label>
                     <textarea id="modal-reflection" rows="3" placeholder="어떤 행동이 성공에 도움이 되었나요? 아쉬운 점이나 내일의 다짐을 적어보세요." class="w-full px-4 py-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"></textarea>
                 </div>
             </div>
 
-            <!-- Footer Action Controls -->
             <div class="flex justify-end space-x-2 mt-6 pt-4 border-t border-slate-100">
-                <button onclick="closeDiaryModal()" class="px-4 py-2 border border-slate-200 text-slate-500 hover:bg-slate-50 text-sm font-semibold rounded-xl transition">
-                    닫기
-                </button>
-                <button id="save-diary-btn" onclick="saveDiaryContent()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition">
-                    저장하기
-                </button>
+                <button onclick="closeDiaryModal()" class="px-4 py-2 border border-slate-200 text-slate-500 hover:bg-slate-50 text-sm font-semibold rounded-xl transition">닫기</button>
+                <button id="save-diary-btn" onclick="saveDiaryContent()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition">저장하기</button>
             </div>
-
         </div>
     </div>
 
-    <!-- 3. 1:1 CHAT MODAL (Feedbacks & Communication) -->
+    <!-- 1:1 CHAT MODAL -->
     <div id="chat-modal" class="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md h-[550px] flex flex-col overflow-hidden transform transition-all">
-            
-            <!-- Header -->
             <div class="bg-emerald-600 text-white p-4 flex justify-between items-center">
                 <div class="flex items-center space-x-2">
                     <i class="fa-solid fa-comments text-lg"></i>
@@ -692,31 +525,21 @@
                 </button>
             </div>
 
-            <!-- Target Student Selector (Visible to Teachers Only) -->
             <div id="teacher-target-selector-container" class="bg-slate-50 border-b border-slate-100 p-3 hidden">
                 <label class="block text-[11px] font-bold text-slate-500 mb-1">피드백 대상 학생 선택</label>
-                <select id="chat-student-selector" onchange="changeChatPartner()" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-white font-semibold text-slate-700">
-                    <!-- Dynamic loaded matching students -->
-                </select>
+                <select id="chat-student-selector" onchange="changeChatPartner()" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-white font-semibold text-slate-700"></select>
             </div>
 
-            <!-- Message Workspace (Scrollable) -->
-            <div id="chat-messages-container" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50">
-                <!-- Dynamic chats -->
-            </div>
+            <div id="chat-messages-container" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50"></div>
 
-            <!-- Message Box Input Form -->
             <div class="p-3 border-t border-slate-200 flex gap-2 bg-white">
                 <input type="text" id="chat-input-field" placeholder="응원과 피드백을 나눠보세요..." class="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                <button onclick="sendChatMessage()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-sm transition">
-                    전송
-                </button>
+                <button onclick="sendChatMessage()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-sm transition">전송</button>
             </div>
-
         </div>
     </div>
 
-    <!-- 4. NOTIFICATION / NOTICE MODAL (Write / View Notice) -->
+    <!-- NOTICE MODAL -->
     <div id="notice-modal" class="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md transform transition-all p-6">
             <div class="flex justify-between items-center mb-4">
@@ -731,44 +554,220 @@
                     <input type="text" id="notice-title" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 mb-1">내용 (웹사이트 링크 입력 시 자동 이동 링크 생성)</label>
-                    <textarea id="notice-content" rows="4" placeholder="예: 유익한 규칙 가이드는 https://www.google.com 에서 볼 수 있습니다." class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 resize-none"></textarea>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">내용 (링크 포함 시 클릭 가능)</label>
+                    <textarea id="notice-content" rows="4" placeholder="유용한 정보를 적어보세요." class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 resize-none"></textarea>
                 </div>
-                <button onclick="saveNotice()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl transition text-sm">
-                    등록 완료
-                </button>
+                <button onclick="saveNotice()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl transition text-sm">등록 완료</button>
             </div>
         </div>
     </div>
 
-    <!-- ==================== DIALOGS & ALERTS MODAL ==================== -->
+    <!-- ALERT MODAL -->
     <div id="alert-modal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-[2px] z-[100] flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm transform transition-all p-6 text-center">
-            <div id="alert-icon" class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 text-xl">
-                🐢
-            </div>
+            <div id="alert-icon" class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 text-xl">🐢</div>
             <h4 id="alert-title" class="text-base font-bold text-slate-800 mb-2">알림</h4>
             <p id="alert-msg" class="text-sm text-slate-500 mb-6 whitespace-pre-line font-medium"></p>
-            <button onclick="closeAlert()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl transition text-sm">
-                확인
-            </button>
+            <button onclick="closeAlert()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-xl transition text-sm">확인</button>
         </div>
     </div>
 
+    <!-- ==================== CORE SCRIPT LOGIC (Firebase SDK v11 Connected) ==================== -->
+    <script type="module">
+        // Firebase CDN Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <!-- ==================== CORE SCRIPT LOGIC ==================== -->
-    <script>
-        // State variables
-        let currentUser = null; 
-        let currentDate = new Date(2026, 5, 29); // 2026년 6월 29일 (초기 설정)
-        let selectedDateStr = ""; // "YYYY-MM-DD"
+        // =========================================================================
+        // [수정 완료] 본인의 Firebase 콘솔에서 발급받은 실시간 데이터베이스 키값들이 정확히 이식되었습니다.
+        // =========================================================================
+        const CONST_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyBLGcHV-bvZf85T6_RVAGp4rXyf6oNgak4",
+            authDomain: "meta-practice-17fc1.firebaseapp.com",
+            projectId: "meta-practice-17fc1",
+            storageBucket: "meta-practice-17fc1.firebasestorage.app",
+            messagingSenderId: "463481112762",
+            appId: "1:463481112762:web:60c94c7cad20ee4f1b1a83",
+            measurementId: "G-NFNZRW8N8N"
+        };
+
+        // Firebase 인프라 초기화 시도
+        let app, auth, db, appId = "ninja-diary-prod";
+        let isFirebaseActive = false;
+
+        if (CONST_FIREBASE_CONFIG.apiKey) {
+            try {
+                app = initializeApp(CONST_FIREBASE_CONFIG);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                isFirebaseActive = true;
+            } catch (err) {
+                console.error("Firebase 초기화 에러. 안전 모드(로컬 저장)로 대체합니다.", err);
+            }
+        }
+
+        // ==================== 초기 데이터 정의 ====================
+        const DEFAULT_USERS = [
+            { id: "student1", pw: "1234", type: "student", name: "김민우", school: "서울초등학교", grade: "5", class: "3", number: "12", approved: true },
+            { id: "student2", pw: "1234", type: "student", name: "이서연", school: "서울초등학교", grade: "5", class: "3", number: "5", approved: true },
+            { id: "student3", pw: "1234", type: "student", name: "박준혁", school: "한국중학교", grade: "1", class: "2", number: "18", approved: true },
+            { id: "teacher1", pw: "1234", type: "teacher", name: "한가람", school: "서울초등학교", role: "homeroom", grade: "5", class: "3", email: "teacher1@school.ed.kr", approved: true },
+            { id: "teacher2", pw: "1234", type: "teacher", name: "정다은", school: "서울초등학교", role: "specialist", grade: "6", class: "", email: "daeun@school.ed.kr", approved: false },
+            { id: "WD2026", pw: "osm@123456", type: "admin", name: "최고관리자", approved: true }
+        ];
+
+        const DEFAULT_DIARY = {
+            "student1_2026-06-15": {
+                todos: [
+                    { id: 1, text: "아침 30분 일찍 일어나서 스트레칭하기", completed: true, rating: 5 },
+                    { id: 2, text: "수학 익힘책 5페이지 풀기", completed: true, rating: 4 },
+                    { id: 3, text: "하루 3번 이상 친구 칭찬하기", completed: false, rating: 3 }
+                ],
+                reflection: "오늘 스트레칭을 하니 몸이 가벼웠다. 칭찬은 2번밖에 못 해서 내일은 더 신경 써야겠다."
+            },
+            "student1_2026-06-29": {
+                todos: [
+                    { id: 6, text: "부모님 심부름 돕기", completed: true, rating: 5 },
+                    { id: 7, text: "일기 밀리지 않고 쓰기", completed: true, rating: 5 },
+                    { id: 8, text: "책 20페이지 읽기", completed: false, rating: 4 }
+                ],
+                reflection: "오늘 하루의 작은 도전들을 착실하게 지켜냈다. 자신감이 점점 차오른다!"
+            }
+        };
+
+        const DEFAULT_BIG_GOALS = {
+            "student1_2026-06": [
+                { id: 101, text: "체력 기르기: 매일 스트레칭과 운동 소홀히 하지 않기" },
+                { id: 102, text: "독서 습관 형성: 한 달 동안 책 2권 완독하기" }
+            ]
+        };
+
+        const DEFAULT_NOTICES = [
+            { id: 1, title: "🐢 '작은 성공' 다이어리 시작을 축하합니다!", content: "하루의 작은 성공들이 모여 큰 나를 만듭니다.", date: "2026-06-01", author: "관리자" }
+        ];
+
+        // ==================== 로컬 저장장치 백업 핸들러 (Firebase 미연동 시의 세이프가드) ====================
+        if (!localStorage.getItem('ninja_diary_initialized')) {
+            localStorage.setItem('ninja_users', JSON.stringify(DEFAULT_USERS));
+            localStorage.setItem('ninja_diary', JSON.stringify(DEFAULT_DIARY));
+            localStorage.setItem('ninja_big_goals', JSON.stringify(DEFAULT_BIG_GOALS));
+            localStorage.setItem('ninja_notices', JSON.stringify(DEFAULT_NOTICES));
+            localStorage.setItem('ninja_chats', JSON.stringify([]));
+            localStorage.setItem('ninja_diary_initialized', 'true');
+        }
+
+        // ==================== 상태값 정의 ====================
+        let currentUser = null;
+        let currentDate = new Date(2026, 5, 29); // 2026년 6월 29일 기준
+        let selectedDateStr = "";
         let activeAuthTab = 'login';
         let activeModalDiaryData = { todos: [], reflection: "" };
-
-        // 1:1 대화 상대 관리
         let activeChatPartnerId = "";
 
-        // Custom notification system
+        // 원격 실시간 동기화 상태용 로컬 캐시
+        let globalUsers = getDBLocal('ninja_users') || [];
+        let globalDiary = getDBLocal('ninja_diary') || {};
+        let globalBigGoals = getDBLocal('ninja_big_goals') || {};
+        let globalNotices = getDBLocal('ninja_notices') || [];
+        let globalChats = getDBLocal('ninja_chats') || [];
+
+        // DB Getter/Setter 로컬 보조용
+        function getDBLocal(key) {
+            return JSON.parse(localStorage.getItem(key));
+        }
+        function setDBLocal(key, val) {
+            localStorage.setItem(key, JSON.stringify(val));
+        }
+
+        // Firestore 6 segments 구조 준수
+        async function syncData(collectionName, payload) {
+            setDBLocal(collectionName, payload); // 로컬 캐시 백업
+            if (isFirebaseActive && auth.currentUser) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'documents', collectionName);
+                    await setDoc(docRef, { data: payload }, { merge: true });
+                } catch (e) {
+                    console.error("Firestore 동기화 유실: ", e);
+                }
+            }
+        }
+
+        // ==================== 클라우드 실시간 스트리밍(onSnapshot) 연동 ====================
+        async function initCloudStreaming() {
+            if (!isFirebaseActive) {
+                renderAllActiveViews();
+                return;
+            }
+
+            // Anonymous Auth 실패 대응 및 폴백 가동 설계
+            try {
+                await signInAnonymously(auth);
+            } catch (authErr) {
+                console.warn("Anonymous auth failed, fallback to local storage mode.", authErr);
+                isFirebaseActive = false; // 클라우드 동기화 모드 비활성화
+                
+                // 어드민 계정 접속 상태 라벨 변경
+                const adminStatus = document.getElementById('admin-connection-status');
+                if (adminStatus) {
+                    adminStatus.textContent = "안전 로컬모드 (원격 동기화 일시정지)";
+                    adminStatus.className = "text-amber-500 font-bold";
+                }
+                
+                showAlert(
+                    "서버 익명 인증이 제한되어 안전 로컬 모드로 정상 작동합니다.\n\n[클라우드 연동 방법]\nFirebase 콘솔 > Authentication > Sign-in method 메뉴에서 '익명(Anonymous)' 로그인 설정을 사용(Enable) 상태로 활성화해 주세요!", 
+                    "클라우드 연동 가이드", 
+                    false
+                );
+                renderAllActiveViews();
+                return;
+            }
+
+            const collections = ['ninja_users', 'ninja_diary', 'ninja_big_goals', 'ninja_notices', 'ninja_chats'];
+            collections.forEach(colName => {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'documents', colName);
+                onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists() && docSnap.data().data) {
+                        const cloudData = docSnap.data().data;
+                        setDBLocal(colName, cloudData);
+                        
+                        if (colName === 'ninja_users') globalUsers = cloudData;
+                        if (colName === 'ninja_diary') globalDiary = cloudData;
+                        if (colName === 'ninja_big_goals') globalBigGoals = cloudData;
+                        if (colName === 'ninja_notices') globalNotices = cloudData;
+                        if (colName === 'ninja_chats') globalChats = cloudData;
+                        
+                        renderAllActiveViews();
+                    } else {
+                        // 클라우드 데이터가 없을 시 로컬스토리지 복구 트리거
+                        const localData = getDBLocal(colName);
+                        if (localData) {
+                            syncData(colName, localData);
+                        }
+                    }
+                }, (error) => {
+                    console.error(`${colName} 데이터 동기화 감지 에러: `, error);
+                });
+            });
+        }
+
+        function renderAllActiveViews() {
+            updateAuthUI();
+            renderNotices();
+            if (currentUser && currentUser.type !== 'admin') {
+                renderMatchingBadge();
+                renderBigGoals();
+                renderStatsAndGraph();
+                renderCalendar();
+            }
+        }
+
+        // ==================== 초기 부트스트랩 온로드 ====================
+        window.addEventListener('load', () => {
+            initCloudStreaming();
+        });
+
+        // ==================== 다목적 모달 알림창 ====================
         function showAlert(msg, title = "알림", isSuccess = true) {
             const alertModal = document.getElementById('alert-modal');
             const alertTitle = document.getElementById('alert-title');
@@ -803,24 +802,8 @@
             document.getElementById('alert-modal').classList.add('hidden');
         }
 
-        // DB Getter/Setter Helper
-        function getDB(key) {
-            return JSON.parse(localStorage.getItem(key));
-        }
-        function setDB(key, val) {
-            localStorage.setItem(key, JSON.stringify(val));
-        }
-
-        // Initialize App on DOM Ready
-        window.onload = function() {
-            updateAuthUI();
-            renderNotices();
-        };
-
-        // 교사 매칭 여부 체크 검증 함수
         function checkStudentMatching(student) {
-            const users = getDB('ninja_users') || [];
-            return users.some(u => 
+            return globalUsers.some(u => 
                 u.type === 'teacher' && 
                 u.approved === true && 
                 u.school === student.school && 
@@ -829,7 +812,7 @@
             );
         }
 
-        // UI Auth Status Bar & Lock Screen Rendering
+        // UI Auth 상태 컨트롤러
         function updateAuthUI() {
             const statusBar = document.getElementById('auth-status-bar');
             const lockScreen = document.getElementById('lock-screen');
@@ -842,19 +825,15 @@
             const lockActions = document.getElementById('lock-actions');
 
             if (!currentUser) {
-                // 1. 로그아웃 상태 -> 상단바 우측 로그인/회원가입 버튼 제거
                 statusBar.innerHTML = ""; 
-                
                 lockScreen.classList.remove('hidden');
                 dashboardWrapper.classList.add('hidden');
                 teacherControlBar.classList.add('hidden');
                 adminDashboardWrapper.classList.add('hidden');
                 lockTitle.textContent = "작은 성공의 시작, 다이어리 로그인! 🐢";
-                lockDesc.textContent = "매일 스스로 정하는 작은 목표와 이를 통한 성취감을 기록해 보세요.\n달력과 다이어리를 사용하려면 로그인이 필요합니다.";
+                lockDesc.textContent = "매일 스스로 정하는 작은 목표와 이를 통한 성취감을 기록해 보세요.\n로그인하면 어느 기기에서나 동일하게 연동됩니다.";
                 lockActions.classList.remove('hidden');
-
             } else {
-                // 2. 로그인 상태
                 let isAuthorized = true; 
                 let blockReasonTitle = "";
                 let blockReasonDesc = "";
@@ -864,17 +843,16 @@
                     if (!hasMatch) {
                         isAuthorized = false;
                         blockReasonTitle = "🐢 매칭된 담임 교사를 찾을 수 없습니다.";
-                        blockReasonDesc = `안녕하세요, ${currentUser.name} 학생!\n현재 소속 정보(${currentUser.school} ${currentUser.grade}학년 ${currentUser.class}반)로 등록된 담임/전담 선생님이 존재하지 않거나 관리자 승인 대기 중입니다.\n\n선생님께서 가입 및 승인이 완료되면 다이어리 달력 화면이 자동으로 활성화됩니다.`;
+                        blockReasonDesc = `안녕하세요, ${currentUser.name} 학생!\n현재 소속 정보(${currentUser.school} ${currentUser.grade}학년 ${currentUser.class}반)로 승인된 담당 선생님이 아직 시스템에 존재하지 않습니다.\n\n선생님께서 가입 후 관리자 가입 승인이 되면 다이어리 잠금이 자동으로 해제됩니다.`;
                     }
                 } else if (currentUser.type === 'teacher') {
                     if (!currentUser.approved) {
                         isAuthorized = false;
-                        blockReasonTitle = "🔒 가입 승인 대기 중";
-                        blockReasonDesc = `${currentUser.name} 교사님, 가입 신청이 성공적으로 접수되었습니다.\n최고관리자(WD2026)의 회원 가입 승인이 완료된 후 대시보드 이용이 가능합니다. 조금만 기다려 주세요!`;
+                        blockReasonTitle = "🔒 교사 승인 대기 중";
+                        blockReasonDesc = `${currentUser.name} 교사님, 가입이 정상 접수되었습니다.\n최고관리자(WD2026) 계정으로 접속하셔서 대시보드 하단에서 승인 처리를 해주셔야 사용이 가능합니다.`;
                     }
                 }
 
-                // 권한 적합성에 따른 대시보드 토글
                 if (currentUser.type === 'admin') {
                     lockScreen.classList.add('hidden');
                     dashboardWrapper.classList.add('hidden');
@@ -887,7 +865,6 @@
                         lockScreen.classList.add('hidden');
                         dashboardWrapper.classList.remove('hidden');
 
-                        // 교사 권한일 때만 특별 '상단 학생 관찰용 제어 바' 표시 및 세팅
                         if (currentUser.type === 'teacher') {
                             teacherControlBar.classList.remove('hidden');
                             populateTeacherStudentSelector();
@@ -904,11 +881,9 @@
                     }
                 }
 
-                // 상단 헤더 프로필 렌더링
                 let badge = "";
-                
                 if (currentUser.type === 'student') {
-                    badge = `<span class="bg-emerald-50 text-emerald-700 font-bold text-[10px] px-2 py-0.5 rounded-full border border-emerald-200">학생 (${currentUser.school} ${currentUser.grade}학년 ${currentUser.class}반 ${currentUser.number}번)</span>`;
+                    badge = `<span class="bg-emerald-50 text-emerald-700 font-bold text-[10px] px-2 py-0.5 rounded-full border border-emerald-200">학생 (${currentUser.school} ${currentUser.grade}-${currentUser.class})</span>`;
                 } else if (currentUser.type === 'teacher') {
                     badge = `<span class="bg-blue-50 text-blue-700 font-bold text-[10px] px-2 py-0.5 rounded-full border border-blue-200">교사 (${currentUser.school} ${currentUser.role === 'homeroom' ? '담임' : '전담'})</span>`;
                 } else if (currentUser.type === 'admin') {
@@ -937,7 +912,6 @@
             }
 
             if (currentUser && dashboardWrapper.className.indexOf('hidden') === -1 && currentUser.type !== 'admin') {
-                // UI 폼 제어 (교사 모드일 때 사이드바의 큰 목표 입력폼을 숨김)
                 const bigGoalForm = document.getElementById('new-big-goal-form-area');
                 const bigGoalBadge = document.getElementById('big-goals-mode-badge');
                 if (currentUser.type === 'teacher') {
@@ -961,7 +935,6 @@
             }
         }
 
-        // 교사 대시보드 학생 목록 동적 바인딩 및 기본값 처리
         function populateTeacherStudentSelector() {
             const selector = document.getElementById('dashboard-student-selector');
             if (!selector) return;
@@ -973,29 +946,23 @@
                 matchedStudents.forEach(st => {
                     selector.innerHTML += `<option value="${st.id}">${st.name} (학년:${st.grade} / 반:${st.class} / 번호:${st.number || '-'})</option>`;
                 });
-                
                 if (!activeChatPartnerId) {
                     activeChatPartnerId = matchedStudents[0].id;
                 }
                 selector.value = activeChatPartnerId;
             } else {
-                selector.innerHTML = `<option value="">매칭된 학생이 없습니다</option>`;
+                selector.innerHTML = `<option value="">매칭된 소속 학생이 없습니다</option>`;
                 activeChatPartnerId = "";
             }
         }
 
-        // 교사 상단 바의 관찰 대상 학생 변경 감지
         function handleTeacherSelectStudent() {
             const val = document.getElementById('dashboard-student-selector').value;
             if (!val) return;
-            
             activeChatPartnerId = val;
             
-            // 1:1 대화방 드롭다운과 동기화 유지
             const chatSelector = document.getElementById('chat-student-selector');
-            if (chatSelector) {
-                chatSelector.value = val;
-            }
+            if (chatSelector) chatSelector.value = val;
 
             renderCalendar();
             renderBigGoals();
@@ -1003,14 +970,13 @@
             renderMatchingBadge();
         }
 
-        // Home Reset button
+        // 홈화면 및 초기 기준일(2026-06-29) 설정
         function goHome() {
             currentDate = new Date(2026, 5, 29);
             updateAuthUI();
         }
 
         // ==================== AUTH CONTROLLERS ====================
-
         function openAuthModal(tab = 'login') {
             document.getElementById('auth-modal').classList.remove('hidden');
             toggleAuthTab(tab);
@@ -1085,34 +1051,30 @@
                 return;
             }
 
-            const users = getDB('ninja_users');
-            const found = users.find(u => u.id === id && u.pw === pw);
+            const found = globalUsers.find(u => u.id === id && u.pw === pw);
 
             if (found) {
                 currentUser = found;
                 closeAuthModal();
-                
                 document.getElementById('login-id').value = "";
                 document.getElementById('login-pw').value = "";
-
-                // 대화 파트너 기본값 초기화
                 activeChatPartnerId = "";
 
                 updateAuthUI();
 
                 if (found.type === 'student') {
                     if (checkStudentMatching(found)) {
-                        showAlert(`${found.name} 학생, 환영합니다! 교사와 매칭되어 다이어리 활성화에 성공했습니다. 🐢`, "매칭 로그인 성공");
+                        showAlert(`${found.name} 학생, 환영합니다! 실시간 연동 다이어리가 로드되었습니다. 🐢`, "성공");
                     } else {
-                        showAlert(`${found.name} 학생, 로그인에는 성공했으나 현재 정보와 일치하는 담당 교사가 학교 내에 없습니다. 다이어리 조회가 잠금 상태입니다.`, "교사 매칭 대기 필요", false);
+                        showAlert(`${found.name} 학생, 소속에 대칭되는 담당 교사 정보가 활성화되지 않았습니다. 잠금 상태로 대기합니다.`, "매칭 보류", false);
                     }
                 } else if (found.type === 'admin') {
-                    showAlert("최고관리자 권한으로 접속했습니다. 전용 통제 대시보드가 로드됩니다.", "관리자 로그인");
+                    showAlert("최고관리자 콘솔에 진입합니다.", "통합 관리 모드");
                 } else {
-                    showAlert(`${found.name || found.id}님, 다이어리에 성공적으로 로그인했습니다!`, "로그인 성공");
+                    showAlert(`${found.name || found.id} 교사님, 다이어리에 정상 접속했습니다.`, "로그인 완료");
                 }
             } else {
-                showAlert("일치하는 회원 정보가 없거나 비밀번호가 틀렸습니다.", "로그인 실패", false);
+                showAlert("일치하는 회원 정보가 존재하지 않습니다.", "로그인 실패", false);
             }
         }
 
@@ -1124,27 +1086,23 @@
             const name = document.getElementById('reg-name').value.trim();
 
             if (!id || !pw || !school || !name) {
-                showAlert("필수 기입 사항이 누락되었습니다.", "오류", false);
+                showAlert("기입 항목이 누락되었습니다.", "작성 누락", false);
                 return;
             }
 
-            const users = getDB('ninja_users');
-            if (users.some(u => u.id === id)) {
-                showAlert("이미 사용 중인 아이디입니다.", "중복 ID", false);
+            if (globalUsers.some(u => u.id === id)) {
+                showAlert("이미 다른 사용자가 사용 중인 아이디입니다.", "아이디 중복", false);
                 return;
             }
 
-            let newUser = {
-                id, pw, type, school, name,
-                approved: false
-            };
+            let newUser = { id, pw, type, school, name, approved: false };
 
             if (type === 'student') {
                 const grade = document.getElementById('reg-stud-grade').value;
                 const clazz = document.getElementById('reg-stud-class').value;
                 const number = document.getElementById('reg-stud-number').value;
                 if (!grade || !clazz || !number) {
-                    showAlert("학년, 반, 번호를 올바르게 입력해 주세요.", "기입 누락", false);
+                    showAlert("학년, 반, 번호를 정확히 기재해 주세요.", "입력 누락", false);
                     return;
                 }
                 newUser.grade = grade;
@@ -1157,7 +1115,7 @@
                 const email = document.getElementById('reg-teach-email').value.trim();
 
                 if (!grade || !email) {
-                    showAlert("학년과 이메일을 기입해 주세요.", "기입 누락", false);
+                    showAlert("학년 및 이메일을 정확히 입력하세요.", "입력 누락", false);
                     return;
                 }
 
@@ -1167,18 +1125,17 @@
                 newUser.class = role === 'homeroom' ? document.getElementById('reg-teach-class').value : "";
 
                 if (role === 'homeroom' && !newUser.class) {
-                    showAlert("담임 교사는 담당 반 정보를 필수로 입력해야 합니다.", "기입 누락", false);
+                    showAlert("담임은 담당할 반 정보가 필수입니다.", "반 정보 누락", false);
                     return;
                 }
             }
 
-            users.push(newUser);
-            setDB('ninja_users', users);
+            globalUsers.push(newUser);
+            syncData('ninja_users', globalUsers);
 
-            showAlert("성공적으로 회원 가입이 접수되었습니다! 로그인 탭에서 로그인을 시도해 주세요.", "가입 완료");
+            showAlert("회원 가입이 완료되었습니다. 로그인해 주세요!", "가입 완료");
             toggleAuthTab('login');
 
-            // Clear inputs
             document.getElementById('reg-id').value = "";
             document.getElementById('reg-pw').value = "";
             document.getElementById('reg-school').value = "";
@@ -1195,12 +1152,10 @@
             currentUser = null;
             activeChatPartnerId = "";
             updateAuthUI();
-            showAlert("정상적으로 로그아웃 되었습니다. 작은 성공은 매일 계속됩니다! 🐢", "로그아웃");
+            showAlert("로그아웃 되었습니다.", "알림");
         }
 
-
         // ==================== CALENDAR GENERATION ====================
-
         function changeMonth(direction) {
             currentDate.setMonth(currentDate.getMonth() + direction);
             renderCalendar();
@@ -1223,8 +1178,6 @@
             const prevLastDay = new Date(year, month, 0).getDate();
 
             const totalSlots = firstDayIndex + lastDay > 35 ? 42 : 35;
-
-            const diaryData = getDB('ninja_diary') || {};
             const targetId = getTargetStudentId(); 
 
             let dayCounter = 1;
@@ -1256,7 +1209,7 @@
                     let starProgressHtml = "";
                     
                     const diaryKey = `${targetId}_${currentDayStr}`;
-                    const dayRecord = diaryData[diaryKey];
+                    const dayRecord = globalDiary[diaryKey];
 
                     if (dayRecord && dayRecord.todos && dayRecord.todos.length > 0) {
                         const maxDisplay = 3;
@@ -1267,11 +1220,7 @@
                             if (idx < maxDisplay) {
                                 const lineClass = todo.completed ? 'line-through text-slate-400 font-normal decoration-emerald-500 decoration-1' : 'text-slate-600 font-medium';
                                 const checkIcon = todo.completed ? '🏆' : '🐢';
-                                todosHtml += `
-                                    <p class="text-[9px] leading-[1.2] truncate ${lineClass}">
-                                        ${checkIcon} ${todo.text}
-                                    </p>
-                                `;
+                                todosHtml += `<p class="text-[9px] leading-[1.2] truncate ${lineClass}">${checkIcon} ${todo.text}</p>`;
                             }
                             count++;
                         });
@@ -1327,29 +1276,25 @@
             return currentUser.id; 
         }
 
-
         // ==================== DIARY DETAIL MODAL ====================
-
         function handleDayClick(dateStr) {
             if (!currentUser) {
-                showAlert("먼저 로그인해 주셔야 다이어리 작성이 가능합니다. 🐢", "로그인 필요", false);
+                showAlert("로그인 세션이 만료되었습니다. 다시 로그인 하십시오.", "알림", false);
                 openAuthModal('login');
                 return;
             }
 
             if (currentUser.type === 'admin') {
-                showAlert("관리자는 다이어리를 작성할 수 없습니다.", "안내", false);
+                showAlert("관리자 등급은 다이어리 수정을 지원하지 않습니다.", "등급 권한 제한", false);
                 return;
             }
 
             selectedDateStr = dateStr;
             const targetId = getTargetStudentId();
-
-            const diaryData = getDB('ninja_diary') || {};
             const key = `${targetId}_${selectedDateStr}`;
             
-            if (diaryData[key]) {
-                activeModalDiaryData = JSON.parse(JSON.stringify(diaryData[key]));
+            if (globalDiary[key]) {
+                activeModalDiaryData = JSON.parse(JSON.stringify(globalDiary[key]));
             } else {
                 activeModalDiaryData = { todos: [], reflection: "" };
             }
@@ -1359,7 +1304,6 @@
             document.getElementById('modal-reflection').value = activeModalDiaryData.reflection || "";
             document.getElementById('new-todo-text').value = "";
 
-            // 교사 조회 모드에 따른 엘리먼트 속성 제어 분기
             const isTeacherMode = (currentUser.type === 'teacher');
             const teacherBanner = document.getElementById('modal-teacher-view-banner');
             const todoInputArea = document.getElementById('new-todo-input-area');
@@ -1390,14 +1334,13 @@
         function renderModalTodos() {
             const listContainer = document.getElementById('modal-todos-list');
             listContainer.innerHTML = "";
-
             const isTeacherMode = (currentUser && currentUser.type === 'teacher');
 
             if (!activeModalDiaryData.todos || activeModalDiaryData.todos.length === 0) {
                 listContainer.innerHTML = `
                     <div class="text-center py-6 text-slate-400 text-xs">
-                        <p>아직 설정된 작은 도전 목표가 없습니다.</p>
-                        <p class="mt-1">${isTeacherMode ? '학생의 입력을 기다려 주세요.' : '새로운 도전을 위해 목표를 추가해 보세요!'}</p>
+                        <p>아직 설정된 오늘 도전 목표가 없습니다.</p>
+                        <p class="mt-1">${isTeacherMode ? '학생의 입력을 실시간으로 기다립니다.' : '새로운 다짐과 도전을 하단에 입력하세요!'}</p>
                     </div>
                 `;
                 return;
@@ -1408,16 +1351,11 @@
                 const textStyle = isCompleted ? 'line-through text-slate-400 font-normal decoration-emerald-500 decoration-2' : 'text-slate-800 font-semibold';
                 const cardBg = isCompleted ? 'bg-slate-50 border-slate-200' : 'bg-emerald-50/50 border-emerald-100';
 
-                // 별표 점수 클릭 방지(교사조회 모드용) 적용
                 let starsHtml = "";
                 for (let star = 1; star <= 5; star++) {
                     const starClass = star <= todo.rating ? 'text-amber-400' : 'text-slate-200';
                     if (isTeacherMode) {
-                        starsHtml += `
-                            <div class="transition transform scale-100">
-                                <i class="fa-solid fa-star ${starClass} text-xs"></i>
-                            </div>
-                        `;
+                        starsHtml += `<div class="transition transform scale-100"><i class="fa-solid fa-star ${starClass} text-xs"></i></div>`;
                     } else {
                         starsHtml += `
                             <button onclick="setTodoRating(${todo.id}, ${star}, event)" class="focus:outline-none transition transform hover:scale-125">
@@ -1427,7 +1365,6 @@
                     }
                 }
 
-                // 삭제 및 상태변경 교사 제약 처리
                 const actionClick = isTeacherMode ? "" : `onclick="toggleTodoComplete(${todo.id})"`;
                 const textInputDisable = isTeacherMode ? "disabled" : "";
 
@@ -1439,11 +1376,8 @@
                             </div>
                             <input type="text" value="${todo.text}" onchange="updateTodoText(${todo.id}, this.value)" onclick="event.stopPropagation()" ${textInputDisable} class="bg-transparent border-b border-transparent hover:border-slate-300 focus:border-emerald-500 focus:outline-none ${textStyle} text-sm flex-1 truncate py-0.5">
                         </div>
-
                         <div class="flex items-center space-x-3">
-                            <div class="flex items-center space-x-1">
-                                ${starsHtml}
-                            </div>
+                            <div class="flex items-center space-x-1">${starsHtml}</div>
                             ${isTeacherMode ? '' : `
                                 <button onclick="deleteTodoFromModal(${todo.id})" class="text-slate-400 hover:text-red-500 p-1 transition">
                                     <i class="fa-solid fa-trash-can text-xs"></i>
@@ -1465,17 +1399,9 @@
             }
 
             const newId = Date.now() + Math.random();
-            const newTodo = {
-                id: newId,
-                text: text,
-                completed: false,
-                rating: 0
-            };
+            const newTodo = { id: newId, text: text, completed: false, rating: 0 };
 
-            if (!activeModalDiaryData.todos) {
-                activeModalDiaryData.todos = [];
-            }
-
+            if (!activeModalDiaryData.todos) activeModalDiaryData.todos = [];
             activeModalDiaryData.todos.push(newTodo);
             input.value = "";
             renderModalTodos();
@@ -1521,20 +1447,18 @@
             const reflection = document.getElementById('modal-reflection').value.trim();
             activeModalDiaryData.reflection = reflection;
 
-            const diaryData = getDB('ninja_diary') || {};
             const targetId = getTargetStudentId();
             const key = `${targetId}_${selectedDateStr}`;
 
             if (activeModalDiaryData.todos.length === 0 && !activeModalDiaryData.reflection) {
-                delete diaryData[key];
+                delete globalDiary[key];
             } else {
-                diaryData[key] = activeModalDiaryData;
+                globalDiary[key] = activeModalDiaryData;
             }
 
-            setDB('ninja_diary', diaryData);
+            syncData('ninja_diary', globalDiary);
             closeDiaryModal();
-            
-            showAlert("하루 기록과 성찰 소감이 성공적으로 반영되었습니다! 🏆", "저장 완료");
+            showAlert("하루 도전 및 자아성찰이 정상 저장되었습니다. 🏆", "동기화 완료");
             renderCalendar();
             renderStatsAndGraph();
         }
@@ -1543,13 +1467,10 @@
             document.getElementById('diary-modal').classList.add('hidden');
         }
 
-
-        // ==================== SIDEBAR 1: MONTHLY BIG GOALS AREA ====================
-
+        // ==================== SIDEBAR 1: 이달의 큰 목표 ====================
         function renderBigGoals() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            const bigGoalsData = getDB('ninja_big_goals') || {};
             const targetId = getTargetStudentId();
             const key = `${targetId}_${year}-${String(month + 1).padStart(2, '0')}`;
             
@@ -1558,12 +1479,10 @@
             const listContainer = document.getElementById('big-goals-list');
             listContainer.innerHTML = "";
 
-            const currentGoals = bigGoalsData[key] || [];
+            const currentGoals = globalBigGoals[key] || [];
 
             if (currentGoals.length === 0) {
-                listContainer.innerHTML = `
-                    <p class="text-slate-400 text-center py-6 italic text-[11px]">이달에 수립한 큰 목표가 없습니다.\n목표를 적고 도전해 보세요!</p>
-                `;
+                listContainer.innerHTML = `<p class="text-slate-400 text-center py-6 italic text-[11px]">이번 달에 등록된 대형 목표가 존재하지 않습니다.</p>`;
                 return;
             }
 
@@ -1588,54 +1507,43 @@
             const text = input.value.trim();
 
             if (!text) {
-                showAlert("큰 목표의 내용을 작성해 주세요.", "알림", false);
+                showAlert("내용을 입력하세요.", "알림", false);
                 return;
             }
 
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            const bigGoalsData = getDB('ninja_big_goals') || {};
             const targetId = getTargetStudentId();
             const key = `${targetId}_${year}-${String(month + 1).padStart(2, '0')}`;
 
-            if (!bigGoalsData[key]) {
-                bigGoalsData[key] = [];
-            }
+            if (!globalBigGoals[key]) globalBigGoals[key] = [];
+            globalBigGoals[key].push({ id: Date.now() + Math.random(), text: text });
 
-            bigGoalsData[key].push({
-                id: Date.now() + Math.random(),
-                text: text
-            });
-
-            setDB('ninja_big_goals', bigGoalsData);
+            syncData('ninja_big_goals', globalBigGoals);
             input.value = "";
             renderBigGoals();
-            showAlert("새로운 이달의 큰 목표를 정상 등록했습니다!", "수립 완료");
+            showAlert("새로운 장기 목표를 정상 수립하였습니다.", "등록 완료");
         }
 
         function deleteBigGoal(id) {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            const bigGoalsData = getDB('ninja_big_goals') || {};
             const targetId = getTargetStudentId();
             const key = `${targetId}_${year}-${String(month + 1).padStart(2, '0')}`;
 
-            if (bigGoalsData[key]) {
-                bigGoalsData[key] = bigGoalsData[key].filter(goal => goal.id !== id);
-                setDB('ninja_big_goals', bigGoalsData);
+            if (globalBigGoals[key]) {
+                globalBigGoals[key] = globalBigGoals[key].filter(goal => goal.id !== id);
+                syncData('ninja_big_goals', globalBigGoals);
                 renderBigGoals();
-                showAlert("해당 목표를 삭제하였습니다.", "삭제 완료");
+                showAlert("선택한 장기 목표를 삭제했습니다.", "완료");
             }
         }
 
-
-        // ==================== SIDEBAR 2: SELF-EFFICACY GRAPH (HORIZONTAL) ====================
-
+        // ==================== SIDEBAR 2: 자기효능감 통계 ====================
         function renderStatsAndGraph() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
             const targetId = getTargetStudentId();
-            const diaryData = getDB('ninja_diary') || {};
 
             let totalEfficacyRatings = [];
             const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -1643,7 +1551,7 @@
             for (let d = 1; d <= daysInMonth; d++) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                 const key = `${targetId}_${dateStr}`;
-                const record = diaryData[key];
+                const record = globalDiary[dateStr] ? globalDiary[dateStr] : globalDiary[key];
 
                 if (record && record.todos && record.todos.length > 0) {
                     const completedRatings = record.todos
@@ -1661,10 +1569,10 @@
 
             if (totalEfficacyRatings.length === 0) {
                 overallAvgLabel.textContent = "0.0";
-                starsContainer.innerHTML = "등록된 데이터 없음";
+                starsContainer.innerHTML = "통계 데이터 부족";
                 progressBar.style.width = "0%";
                 progressPercentLabel.textContent = "0%";
-                feedbackText.textContent = "도전 목표를 완료 처리하고 별표로 자기효능감을 설정해 주면 실시간 평균 리포트가 수립됩니다.";
+                feedbackText.textContent = "작은 성공 도장 깨기 후 별점을 부여하면 실시간 자기효능감 지수가 충전됩니다.";
                 return;
             }
 
@@ -1677,65 +1585,47 @@
             let starIcons = "";
             const roundedStars = Math.round(avg);
             for (let s = 1; s <= 5; s++) {
-                if (s <= roundedStars) {
-                    starIcons += `<i class="fa-solid fa-star text-amber-400"></i>`;
-                } else {
-                    starIcons += `<i class="fa-solid fa-star text-slate-200"></i>`;
-                }
+                starIcons += s <= roundedStars ? `<i class="fa-solid fa-star text-amber-400"></i>` : `<i class="fa-solid fa-star text-slate-200"></i>`;
             }
-            starsContainer.innerHTML = starIcons + ` <span class="text-slate-500 text-[10px] ml-1">(${totalEfficacyRatings.length}개 평가)</span>`;
+            starsContainer.innerHTML = starIcons + ` <span class="text-slate-500 text-[10px] ml-1">(${totalEfficacyRatings.length}개)</span>`;
 
             const percentage = (avg / 5) * 100;
             progressBar.style.width = `${percentage}%`;
             progressPercentLabel.textContent = `${Math.round(percentage)}%`;
 
             if (avg >= 4.5) {
-                feedbackText.innerHTML = `<i class="fa-solid fa-trophy text-amber-500 mr-1"></i><strong>매우 우수함:</strong> 스스로 해낼 수 있다는 강한 자신감을 품고 있네요! 이대로 멋지게 전진하세요!`;
+                feedbackText.innerHTML = `<i class="fa-solid fa-trophy text-amber-500 mr-1"></i><strong>아주 높음:</strong> 성취 효능감이 가득 차 있네요! 이 기세를 이어가세요!`;
             } else if (avg >= 3.5) {
-                feedbackText.innerHTML = `<i class="fa-solid fa-face-smile text-emerald-500 mr-1"></i><strong>훌륭함:</strong> 긍정적인 성장을 체감하고 있습니다. 꾸준함이 무기입니다.`;
-            } else if (avg >= 2.0) {
-                feedbackText.innerHTML = `<i class="fa-solid fa-person-running text-blue-500 mr-1"></i><strong>도전 중:</strong> 한 단계씩 도전을 성공하며 효능감이 조금씩 쌓이고 있습니다. 힘내세요!`;
+                feedbackText.innerHTML = `<i class="fa-solid fa-face-smile text-emerald-500 mr-1"></i><strong>안정적:</strong> 자기주도적 성장을 견고하게 이행 중입니다.`;
             } else {
-                feedbackText.innerHTML = `<i class="fa-solid fa-circle-exclamation text-slate-400 mr-1"></i><strong>성장 대기:</strong> 작은 성공부터 차근차근 시작해보면, 자신감이 자연스레 차오를 거예요!`;
+                feedbackText.innerHTML = `<i class="fa-solid fa-person-running text-blue-500 mr-1"></i><strong>성장 중:</strong> 한 단계씩 수립하며 도전을 체화하는 과정입니다.`;
             }
         }
 
-
-        // ==================== NOTICES (Linked Support for Matched Teachers) ====================
-
+        // ==================== NOTICES ====================
         function renderNotices() {
-            const notices = getDB('ninja_notices') || [];
             const container = document.getElementById('notice-container');
             container.innerHTML = "";
 
-            if (notices.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">등록된 공지사항이 없습니다.</p>`;
+            if (globalNotices.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">등록된 긴급 알림이 없습니다.</p>`;
                 return;
             }
 
-            // HTML Escaper for preventing XSS injection while keeping design robust
             function escapeHTML(str) {
-                return str.replace(/[&<>'"]/g, 
-                    tag => ({
-                        '&': '&amp;',
-                        '<': '&lt;',
-                        '>': '&gt;',
-                        "'": '&#39;',
-                        '"': '&quot;'
-                    }[tag] || tag)
-                );
+                return str.replace(/[&<>'"]/g, tag => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+                }[tag] || tag));
             }
 
-            // URL Regex parser to automatically create clickable rich hyperlinks with icons
             function linkify(text) {
                 const urlRegex = /(https?:\/\/[^\s]+)/g;
                 return text.replace(urlRegex, function(url) {
-                    return `<a href="${url}" target="_blank" class="text-emerald-600 hover:text-emerald-800 underline font-bold inline-flex items-center gap-1.5 ml-1" onclick="event.stopPropagation()"><i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>링크 이동</a>`;
+                    return `<a href="${url}" target="_blank" class="text-emerald-600 hover:text-emerald-800 underline font-bold inline-flex items-center gap-1.5 ml-1" onclick="event.stopPropagation()"><i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>링크</a>`;
                 });
             }
 
-            notices.slice().reverse().forEach(notice => {
-                // Students (student) CANNOT delete notices, only admin and teacher can
+            globalNotices.slice().reverse().forEach(notice => {
                 const canDelete = currentUser && (currentUser.type === 'admin' || currentUser.type === 'teacher');
                 const safeTitle = escapeHTML(notice.title);
                 const safeContent = linkify(escapeHTML(notice.content));
@@ -1759,7 +1649,7 @@
 
         function openNoticeModal() {
             if (!currentUser || (currentUser.type !== 'teacher' && currentUser.type !== 'admin')) {
-                showAlert("공지사항 추가 권한이 없습니다.", "권한 제한", false);
+                showAlert("공지 작성 권한이 제한되어 있습니다.", "권한 부족", false);
                 return;
             }
             document.getElementById('notice-modal').classList.remove('hidden');
@@ -1774,11 +1664,10 @@
             const content = document.getElementById('notice-content').value.trim();
 
             if (!title || !content) {
-                showAlert("제목과 내용을 올바르게 채워주세요.", "오류", false);
+                showAlert("공지 내용 및 헤더를 가득 입력하세요.", "내용 무효", false);
                 return;
             }
 
-            const notices = getDB('ninja_notices') || [];
             const newNotice = {
                 id: Date.now(),
                 title: title,
@@ -1787,11 +1676,11 @@
                 author: currentUser.name || "선생님"
             };
 
-            notices.push(newNotice);
-            setDB('ninja_notices', notices);
+            globalNotices.push(newNotice);
+            syncData('ninja_notices', globalNotices);
 
             closeNoticeModal();
-            showAlert("공지사항이 성공적으로 등록되었습니다.", "공지 완료");
+            showAlert("학급 및 전사 공지 사항이 성공적으로 게재되었습니다.", "게시 완료");
             renderNotices();
 
             document.getElementById('notice-title').value = "";
@@ -1799,25 +1688,17 @@
         }
 
         function deleteNotice(id) {
-            // Strictly guard deletion on backend level so students cannot cheat deletion
-            if (!currentUser || (currentUser.type !== 'admin' && currentUser.type !== 'teacher')) {
-                showAlert("공지사항을 삭제할 권한이 없습니다.", "보안 제한", false);
-                return;
-            }
-            let notices = getDB('ninja_notices') || [];
-            notices = notices.filter(n => n.id !== id);
-            setDB('ninja_notices', notices);
-            showAlert("공지사항이 정상적으로 삭제되었습니다.", "완료");
+            if (!currentUser || (currentUser.type !== 'admin' && currentUser.type !== 'teacher')) return;
+            globalNotices = globalNotices.filter(n => n.id !== id);
+            syncData('ninja_notices', globalNotices);
+            showAlert("공지사항을 철회 및 파기했습니다.", "성공");
             renderNotices();
         }
 
-
-        // ==================== 1:1 REALTIME FEEDBACK BELL & CHAT SYSTEM ====================
-
+        // ==================== 1:1 REALTIME CHAT SYSTEM ====================
         function getMatchingStudents() {
             if (!currentUser) return [];
-            const users = getDB('ninja_users') || [];
-            return users.filter(u => u.type === 'student' && u.school === currentUser.school);
+            return globalUsers.filter(u => u.type === 'student' && u.school === currentUser.school);
         }
 
         function renderMatchingBadge() {
@@ -1827,8 +1708,7 @@
             if (!currentUser) return;
 
             if (currentUser.type === 'student') {
-                const users = getDB('ninja_users') || [];
-                const matchedTeacher = users.find(u => 
+                const matchedTeacher = globalUsers.find(u => 
                     u.type === 'teacher' && 
                     u.approved === true &&
                     u.school === currentUser.school && 
@@ -1840,14 +1720,14 @@
                     container.innerHTML = `
                         <div class="bg-emerald-50 text-emerald-700 rounded-full px-3 py-1 text-xs font-semibold flex items-center gap-1.5 border border-emerald-100 shadow-sm">
                             <i class="fa-solid fa-link text-[10px]"></i>
-                            <span>매칭 교사: <strong>${matchedTeacher.name} 선생님</strong></span>
+                            <span>클라우드 매칭: <strong>${matchedTeacher.name} 선생님</strong></span>
                         </div>
                     `;
                 } else {
                     container.innerHTML = `
                         <div class="bg-slate-100 text-slate-500 rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1.5 border border-slate-200">
                             <i class="fa-solid fa-link-slash text-[10px]"></i>
-                            <span>매칭 대기 중</span>
+                            <span>소속 담임 교사 매칭 대기 중</span>
                         </div>
                     `;
                 }
@@ -1856,7 +1736,7 @@
                 container.innerHTML = `
                     <div class="bg-blue-50 text-blue-700 rounded-full px-3 py-1 text-xs font-semibold flex items-center gap-1.5 border border-blue-100 shadow-sm">
                         <i class="fa-solid fa-user-graduate text-[10px]"></i>
-                        <span>소속 학생 관리: <strong>${totalStudents}명 매칭</strong></span>
+                        <span>배정 학생: <strong>${totalStudents}명 연동</strong></span>
                     </div>
                 `;
             }
@@ -1864,7 +1744,7 @@
 
         function openChatModal() {
             if (!currentUser) {
-                showAlert("로그인이 필요합니다.", "안내", false);
+                showAlert("로그인 세션이 만료되었습니다.", "인증 실패", false);
                 return;
             }
 
@@ -1874,8 +1754,7 @@
             if (currentUser.type === 'student') {
                 selectorContainer.classList.add('hidden');
                 
-                const users = getDB('ninja_users') || [];
-                const matchedTeacher = users.find(u => 
+                const matchedTeacher = globalUsers.find(u => 
                     u.type === 'teacher' && 
                     u.approved === true &&
                     u.school === currentUser.school && 
@@ -1885,10 +1764,10 @@
 
                 if (matchedTeacher) {
                     activeChatPartnerId = matchedTeacher.id;
-                    partnerInfoLabel.textContent = `${matchedTeacher.name} 선생님과의 1:1 상담 피드백`;
+                    partnerInfoLabel.textContent = `${matchedTeacher.name} 선생님과의 1:1 성찰 카운셀링`;
                 } else {
                     activeChatPartnerId = "";
-                    partnerInfoLabel.textContent = "아직 매칭된 소속 선생님이 없습니다.";
+                    partnerInfoLabel.textContent = "가용 매칭 교사가 존재하지 않습니다.";
                 }
             } else if (currentUser.type === 'teacher') {
                 selectorContainer.classList.remove('hidden');
@@ -1902,42 +1781,35 @@
                         selector.innerHTML += `<option value="${st.id}">${st.name} (학년:${st.grade} / 반:${st.class} / 번호:${st.number || '-'})</option>`;
                     });
                     
-                    if (!activeChatPartnerId) {
-                        activeChatPartnerId = matchedStudents[0].id;
-                    }
-                    
+                    if (!activeChatPartnerId) activeChatPartnerId = matchedStudents[0].id;
                     selector.value = activeChatPartnerId;
                     const activeSt = matchedStudents.find(s => s.id === activeChatPartnerId);
-                    partnerInfoLabel.textContent = `${activeSt ? activeSt.name : '학생'}과의 1:1 피드백 및 소통`;
+                    partnerInfoLabel.textContent = `${activeSt ? activeSt.name : '학생'}과의 실시간 피드백 대화`;
                 } else {
-                    selector.innerHTML = `<option value="">매칭된 학생 없음</option>`;
+                    selector.innerHTML = `<option value="">배정 연동 학생 없음</option>`;
                     activeChatPartnerId = "";
-                    partnerInfoLabel.textContent = "소속 매칭 대상 학생 회원이 없습니다.";
+                    partnerInfoLabel.textContent = "관할 소속 학교 학생이 조회되지 않습니다.";
                 }
             } else {
                 selectorContainer.classList.add('hidden');
                 activeChatPartnerId = "student1";
-                partnerInfoLabel.textContent = "가상 학생 피드백 시뮬레이터 (관리자 모드)";
+                partnerInfoLabel.textContent = "테스트 학생 피드백 (어드민 모드)";
             }
 
             renderChatMessages();
             document.getElementById('chat-modal').classList.remove('hidden');
         }
 
-        // 1대1 대화 모달창 안에서 대상을 전환했을 때 상단 대시보드 관찰 학생도 자동 연계 전환
         function changeChatPartner() {
             const selector = document.getElementById('chat-student-selector');
             activeChatPartnerId = selector.value;
             
-            // 상단 대시보드 셀렉터에도 동기화
             const dbSelector = document.getElementById('dashboard-student-selector');
-            if (dbSelector) {
-                dbSelector.value = activeChatPartnerId;
-            }
+            if (dbSelector) dbSelector.value = activeChatPartnerId;
 
             const matchedStudents = getMatchingStudents();
             const activeSt = matchedStudents.find(s => s.id === activeChatPartnerId);
-            document.getElementById('chat-partner-info').textContent = `${activeSt ? activeSt.name : '학생'}과의 1:1 피드백 및 소통`;
+            document.getElementById('chat-partner-info').textContent = `${activeSt ? activeSt.name : '학생'}과의 실시간 소통`;
 
             renderChatMessages();
             renderCalendar();
@@ -1954,17 +1826,14 @@
                 msgContainer.innerHTML = `
                     <div class="text-center py-12 text-slate-400 text-xs">
                         <i class="fa-solid fa-circle-question text-3xl mb-2 text-slate-300"></i>
-                        <p>소통 대상을 찾을 수 없습니다.</p>
-                        <p class="mt-1">동일 학교에 소속된 교사/학생 계정이 매칭되어야 합니다.</p>
+                        <p>동기화된 소통 대상을 발견하지 못했습니다.</p>
                     </div>
                 `;
                 return;
             }
 
-            const chats = getDB('ninja_chats') || [];
             const myId = currentUser.id;
-
-            const filteredChats = chats.filter(c => 
+            const filteredChats = globalChats.filter(c => 
                 (c.from === myId && c.to === activeChatPartnerId) || 
                 (c.from === activeChatPartnerId && c.to === myId)
             );
@@ -1973,8 +1842,7 @@
                 msgContainer.innerHTML = `
                     <div class="text-center py-12 text-slate-400 text-xs">
                         <i class="fa-solid fa-paper-plane text-2xl mb-2 text-emerald-400"></i>
-                        <p>대화 기록이 아직 없습니다.</p>
-                        <p class="mt-1">첫 질문이나 응원을 남겨보세요!</p>
+                        <p>성찰 기록에 대해 격려의 코멘트를 남겨보세요.</p>
                     </div>
                 `;
                 return;
@@ -1997,9 +1865,7 @@
                 `;
             });
 
-            setTimeout(() => {
-                msgContainer.scrollTop = msgContainer.scrollHeight;
-            }, 50);
+            setTimeout(() => { msgContainer.scrollTop = msgContainer.scrollHeight; }, 50);
         }
 
         function sendChatMessage() {
@@ -2008,12 +1874,10 @@
 
             if (!text) return;
             if (!activeChatPartnerId) {
-                showAlert("대화 상대가 올바르지 않습니다.", "대화 불가", false);
+                showAlert("수신 대상이 설정되지 않았습니다.", "수신 불안정", false);
                 return;
             }
 
-            const chats = getDB('ninja_chats') || [];
-            
             const now = new Date();
             const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
@@ -2024,8 +1888,8 @@
                 timestamp: dateStr
             };
 
-            chats.push(newMsg);
-            setDB('ninja_chats', chats);
+            globalChats.push(newMsg);
+            syncData('ninja_chats', globalChats);
 
             input.value = "";
             renderChatMessages();
@@ -2035,29 +1899,23 @@
             document.getElementById('chat-modal').classList.add('hidden');
         }
 
-
-        // ==================== ADMIN DASHBOARD RENDER LOGICS ====================
-
+        // ==================== ADMIN CONTROL PANEL ====================
         function renderAdminDashboard() {
             if (!currentUser || currentUser.type !== 'admin') return;
 
-            const users = getDB('ninja_users') || [];
-            
-            const totalCount = users.length;
-            const pendingTeachers = users.filter(u => u.type === 'teacher' && !u.approved);
-            const activeStudents = users.filter(u => u.type === 'student');
+            const totalCount = globalUsers.length;
+            const pendingTeachers = globalUsers.filter(u => u.type === 'teacher' && !u.approved);
+            const activeStudents = globalUsers.filter(u => u.type === 'student');
 
-            // Metrics Update
             document.getElementById('admin-main-stat-total').textContent = `${totalCount}명`;
             document.getElementById('admin-main-stat-pending').textContent = `${pendingTeachers.length}명`;
             document.getElementById('admin-main-stat-student').textContent = `${activeStudents.length}명`;
 
-            // Render Pending Teachers in Admin area
             const pendingTbody = document.getElementById('admin-main-pending-teachers');
             pendingTbody.innerHTML = "";
 
             if (pendingTeachers.length === 0) {
-                pendingTbody.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-slate-400 italic text-xs">승인 대기 중인 교사 회원이 없습니다.</td></tr>`;
+                pendingTbody.innerHTML = `<tr><td colspan="3" class="text-center py-6 text-slate-400 italic text-xs">승인 심사 대기 대상 교사가 존재하지 않습니다.</td></tr>`;
             } else {
                 pendingTeachers.forEach(t => {
                     pendingTbody.innerHTML += `
@@ -2065,23 +1923,20 @@
                             <td class="px-3 py-2.5 font-semibold text-slate-700">${t.name}<br><span class="text-[10px] text-slate-400 font-normal">${t.id}</span></td>
                             <td class="px-3 py-2.5 text-slate-600">${t.school}<br><span class="text-[10px] text-indigo-600 font-semibold">${t.role === 'homeroom' ? '담임' : '전담'} (${t.grade}학년 ${t.class ? t.class + '반' : ''})</span></td>
                             <td class="px-3 py-2.5 text-right">
-                                <button onclick="adminApproveTeacher('${t.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold transition shadow-xs">
-                                    승인
-                                </button>
+                                <button onclick="adminApproveTeacher('${t.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold transition shadow-xs">승인</button>
                             </td>
                         </tr>
                     `;
                 });
             }
 
-            // Render All Users in Admin area
             const allUsersTbody = document.getElementById('admin-main-all-users');
             allUsersTbody.innerHTML = "";
 
-            const targetUsers = users.filter(u => u.type !== 'admin');
+            const targetUsers = globalUsers.filter(u => u.type !== 'admin');
 
             if (targetUsers.length === 0) {
-                allUsersTbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400 italic text-xs">가입된 회원 목록이 없습니다.</td></tr>`;
+                allUsersTbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400 italic text-xs">등록된 전체 회원 수가 0명입니다.</td></tr>`;
             } else {
                 targetUsers.forEach(u => {
                     const badgeClass = u.type === 'student' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800';
@@ -2090,15 +1945,11 @@
 
                     allUsersTbody.innerHTML += `
                         <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-                            <td class="px-3 py-2.5">
-                                <span class="${badgeClass} px-2 py-0.5 rounded-full text-[9px] font-bold">${labelText}</span>
-                            </td>
+                            <td class="px-3 py-2.5"><span class="${badgeClass} px-2 py-0.5 rounded-full text-[9px] font-bold">${labelText}</span></td>
                             <td class="px-3 py-2.5 font-semibold text-slate-700">${u.name}<br><span class="text-[10px] text-slate-400 font-normal">${u.id}</span></td>
                             <td class="px-3 py-2.5 text-slate-600">${u.school}<br><span class="text-[10px] text-slate-500">${roleInfo} ${!u.approved ? '<span class="text-red-500 font-bold ml-1">(미승인)</span>' : ''}</span></td>
                             <td class="px-3 py-2.5 text-right">
-                                <button onclick="adminExpelUser('${u.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition border border-red-100 shadow-xs">
-                                    강제 탈퇴
-                                </button>
+                                <button onclick="adminExpelUser('${u.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1 rounded-lg text-[10px] font-bold transition border border-red-100 shadow-xs">제한 및 추방</button>
                             </td>
                         </tr>
                     `;
@@ -2107,27 +1958,57 @@
         }
 
         function adminApproveTeacher(id) {
-            let users = getDB('ninja_users') || [];
-            users = users.map(u => {
-                if (u.id === id) {
-                    return { ...u, approved: true };
-                }
+            globalUsers = globalUsers.map(u => {
+                if (u.id === id) return { ...u, approved: true };
                 return u;
             });
-            setDB('ninja_users', users);
-            showAlert(`교사 회원(${id}) 가입이 승인되었습니다.`, "승인 처리 완료");
+            syncData('ninja_users', globalUsers);
+            showAlert(`교사 계정(${id})의 가입 인가가 성공적으로 끝났습니다.`, "승인 승낙 처리 완료");
             renderAdminDashboard();
             updateAuthUI();
         }
 
         function adminExpelUser(id) {
-            let users = getDB('ninja_users') || [];
-            users = users.filter(u => u.id !== id);
-            setDB('ninja_users', users);
-            showAlert(`해당 회원(${id})을 강제 탈퇴 처리하였습니다.`, "탈퇴 처리 완료");
+            globalUsers = globalUsers.filter(u => u.id !== id);
+            syncData('ninja_users', globalUsers);
+            showAlert(`계정 (${id})이 데이터베이스에서 파기 차단되었습니다.`, "영구 강제 탈퇴");
             renderAdminDashboard();
             updateAuthUI();
         }
+
+        // Module Scope Functions를 Window Global에 명시적 매핑하여 Inline HTML onclick 파괴 방지
+        window.goHome = goHome;
+        window.openAuthModal = openAuthModal;
+        window.closeAuthModal = closeAuthModal;
+        window.toggleAuthTab = toggleAuthTab;
+        window.toggleRegisterFields = toggleRegisterFields;
+        window.adjustTeacherClassField = adjustTeacherClassField;
+        window.handleLogin = handleLogin;
+        window.handleRegister = handleRegister;
+        window.handleLogout = handleLogout;
+        window.changeMonth = changeMonth;
+        window.handleDayClick = handleDayClick;
+        window.addTodoToDate = addTodoToDate;
+        window.toggleTodoComplete = toggleTodoComplete;
+        window.updateTodoText = updateTodoText;
+        window.setTodoRating = setTodoRating;
+        window.deleteTodoFromModal = deleteTodoFromModal;
+        window.saveDiaryContent = saveDiaryContent;
+        window.closeDiaryModal = closeDiaryModal;
+        window.addBigGoal = addBigGoal;
+        window.deleteBigGoal = deleteBigGoal;
+        window.openNoticeModal = openNoticeModal;
+        window.closeNoticeModal = closeNoticeModal;
+        window.saveNotice = saveNotice;
+        window.deleteNotice = deleteNotice;
+        window.openChatModal = openChatModal;
+        window.changeChatPartner = changeChatPartner;
+        window.sendChatMessage = sendChatMessage;
+        window.closeChatModal = closeChatModal;
+        window.adminApproveTeacher = adminApproveTeacher;
+        window.adminExpelUser = adminExpelUser;
+        window.closeAlert = closeAlert;
+        window.handleTeacherSelectStudent = handleTeacherSelectStudent;
 
     </script>
 </body>
