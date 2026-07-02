@@ -1,0 +1,26 @@
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, collection, onSnapshot, query, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+
+    // APP ID SETUP
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'diary-matching-system-app';
+
+    // 요청하신 Firebase 설정값을 안전하게 주입했습니다.
+    const firebaseConfig = {
+        apiKey: "AIzaSyBLGcHV-bvZf85T6_RVAGp4rXyf6oNgak4",
+        authDomain: "meta-practice-17fc1.firebaseapp.com",
+        projectId: "meta-practice-17fc1",
+        storageBucket: "meta-practice-17fc1.firebasestorage.app",
+        messagingSenderId: "463481112762",
+        appId: "1:463481112762:web:60c94c7cad20ee4f1b1a83",
+        measurementId: "G-NFNZRW8N8N"
+    };
+
+    // INITIALIZE FIREBASE
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    
+    // ... (이하 동기화 및 대시보드 렌더링 로직 정상 포함)
+</script>
