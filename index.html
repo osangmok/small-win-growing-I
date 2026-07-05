@@ -280,6 +280,7 @@
                             <div class="flex items-center gap-2 mb-4">
                                 <span class="p-2 bg-amber-50 text-amber-600 rounded-xl">
                                     <i class="fa-solid fa-bullhorn text-lg"></i>
+                                end
                                 </span>
                                 <h3 class="text-lg font-bold text-slate-800">선생님 공지사항</h3>
                             </div>
@@ -376,7 +377,7 @@
                 <div id="teacher-banner-approved" class="hidden bg-emerald-600 text-white p-6 sm:p-8 rounded-2xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                     <div>
                         <div class="flex items-center gap-2 mb-2">
-                            <span class="px-2.5 py-0.5 bg-emerald-50 text-white rounded text-xs font-bold tracking-wide">인증된 교사 대시보드</span>
+                            <span class="px-2.5 py-0.5 bg-emerald-500 text-white rounded text-xs font-bold tracking-wide">인증된 교사 대시보드</span>
                             <span id="teacher-class-tag" class="text-xs text-yellow-200 font-medium"></span>
                         </div>
                         <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-yellow-300" id="teacher-welcome-title">선생님, 환영합니다!</h2>
@@ -566,7 +567,7 @@
                             <i class="fa-solid fa-comments text-emerald-500"></i> 선생님의 따뜻한 피드백
                         </h4>
                         <div class="flex gap-2 items-center">
-                            <button id="btn-ai-feedback" onclick="window.generateAIFeedback()" class="text-xs px-2.5 py-1 bg-gradient-to-r from-amber-400 to-orange-400 text-amber-900 rounded-lg shadow-sm hover:from-amber-500 hover:to-orange-500 transition flex items-center gap-1 hidden">
+                            <button id="btn-ai-feedback" onclick="window.generateAIFeedback()" class="text-xs px-2.5 py-1 bg-gradient-to-r from-amber-400 to-orange-400 text-amber-900 rounded-lg shadow-sm hover:from-amber-500 hover:to-orange-500 transition flex items-center gap-1">
                                 ✨ AI 도우미
                             </button>
                             <span id="feedback-status" class="text-xs text-slate-400">대기 중</span>
@@ -650,7 +651,7 @@
             appId: "1:463481112762:web:60c94c7cad20ee4f1b1a83",
             measurementId: "G-NFNZRW8N8N"
         };
-        const geminiApiKey = ""; // Provided by execution environment
+        const geminiApiKey = ""; // 런타임에 자동 주입되도록 빈 값 유지
 
         // INITIALIZE FIREBASE
         const app = initializeApp(firebaseConfig);
@@ -753,28 +754,32 @@
             }
         }
 
+        // 일기 기록을 기반으로 AI 피드백을 중복 및 다채롭게 생성해주는 기능
         window.generateAIFeedback = async function() {
-            const isTeacher = currentProfileData.role === 'teacher';
             const diaryText = document.getElementById('modal-diary-textarea').value.trim();
             if (!diaryText) {
                 window.showAlert("작성된 일기 내용이 없어 AI 피드백을 생성할 수 없습니다. 일기를 먼저 작성해 주세요.");
                 return;
             }
             
-            const prompt = `선생님의 입장에서 학생이 작성한 다음 성찰 일기를 읽고, 따뜻하고 긍정적인 격려의 피드백을 2~3문장으로 작성해줘. 칭찬할 점을 구체적으로 언급하고, 학생의 내일을 진심으로 응원하는 다정한 말투로 부탁해.\n\n학생의 일기:\n"${diaryText}"`;
+            const isTeacher = currentProfileData.role === 'teacher';
+            const randomVal = Math.floor(Math.random() * 1000); // 매번 다른 피드백 스타일을 유도하기 위한 난수 추가
+            const prompt = `선생님의 입장에서 학생이 작성한 다음 성찰 일기를 읽고, 따뜻하고 긍정적인 격려의 피드백을 2~3문장으로 작성해줘. 학생의 노력이나 배움을 구체적으로 언급하고 힘을 실어줘. 존댓말과 정답고 친근한 교사의 다정한 어조를 사용하고, 이전 피드백과 겹치지 않게 개성 있는 피드백을 만들어줘 (코드: ${randomVal}).\n\n학생의 일기:\n"${diaryText}"`;
             
             if (isTeacher) {
                 const textarea = document.getElementById('modal-feedback-textarea');
-                textarea.value = "✨ AI 도우미가 따뜻한 피드백을 고민하고 있습니다...";
+                const originalVal = textarea.value;
+                textarea.value = "✨ AI 도우미가 새로운 피드백을 고민하고 있습니다...";
                 textarea.disabled = true;
                 
                 const result = await window.callGeminiAPI(prompt);
                 
                 textarea.value = result;
                 textarea.disabled = false;
+                window.showToast("새로운 피드백이 생성되었습니다. 저장 버튼을 누르면 적용됩니다!");
             } else {
                 const view = document.getElementById('modal-feedback-view');
-                view.innerText = "✨ AI 도우미가 따뜻한 피드백을 고민하고 있습니다...";
+                view.innerText = "✨ AI 도우미가 새로운 피드백을 고민하고 있습니다...";
                 
                 const result = await window.callGeminiAPI(prompt);
                 view.innerText = result;
@@ -786,7 +791,7 @@
                 const existingDiary = diariesList.find(d => d.userId === currentViewedUserId && d.date === selectedDateString);
                 if (existingDiary) {
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'diaries', existingDiary.id), { feedback: result });
-                    window.showToast("AI 도우미의 피드백이 도착했습니다!");
+                    window.showToast("AI 도우미의 새로운 피드백이 등록되었습니다!");
                 } else {
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'diaries'), {
                         userId: currentViewedUserId, date: selectedDateString, content: diaryText, feedback: result, createdAt: new Date().toISOString()
@@ -1097,33 +1102,6 @@
             document.getElementById('register-school').value = "";
         }
 
-        // ==========================================
-        // ALERTS & CHAT NOTIFICATION LOGIC
-        // ==========================================
-        window.updateChatNotifications = function() {
-            if (!currentProfileData) return;
-            const lastReadTime = localStorage.getItem('chatLastRead_' + currentProfileData.uid) || '1970-01-01T00:00:00.000Z';
-            
-            // 나에게 도착한 메시지 중 읽은 시간보다 최신인 것이 있는지 확인
-            const hasUnread = chatsList.some(c => c.receiverId === currentProfileData.uid && c.time > lastReadTime);
-            
-            const sBell = document.getElementById('student-chat-bell');
-            const tBell = document.getElementById('teacher-chat-bell');
-            
-            if (sBell) {
-                if (hasUnread) sBell.classList.remove('hidden');
-                else sBell.classList.add('hidden');
-            }
-            if (tBell) {
-                if (hasUnread) tBell.classList.remove('hidden');
-                else tBell.classList.add('hidden');
-            }
-            
-            if (currentProfileData.role === 'teacher' && !document.getElementById('chat-modal').classList.contains('hidden')) {
-                window.renderChatPartners();
-            }
-        }
-
         // REAL-TIME FIRESTORE MULTI-USER SYNC
         window.startGlobalListeners = function() {
             window.clearAllListeners();
@@ -1159,6 +1137,12 @@
                     data.id = doc.id;
                     todosList.push(data);
                 });
+                
+                // 모달창이 열려있다면 할 일 리스트를 즉시 새 데이터로 갱신해 줍니다.
+                if (!document.getElementById('diary-modal').classList.contains('hidden')) {
+                    window.renderModalContent();
+                }
+                
                 if (currentProfileData.role === 'student' || currentViewedUserId) window.renderCalendar(currentViewedUserId);
             }, (error) => console.error(error)));
 
@@ -1616,7 +1600,8 @@
                     feedbackTextarea.value = dayDiary.feedback;
                     statusSpan.innerText = "피드백 완료";
                     statusSpan.className = "text-xs font-bold text-emerald-600";
-                    if (isStudent && isMyDiary) btnAiFeedback.classList.add('hidden');
+                    // 피드백 완료 상태여도 새로운 조언을 다시 받아볼 수 있도록 항상 버튼 노출 유지
+                    if (isStudent && isMyDiary) btnAiFeedback.classList.remove('hidden');
                 } else {
                     feedbackView.innerText = "아직 선생님의 피드백이 없습니다.";
                     feedbackTextarea.value = "";
