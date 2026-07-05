@@ -376,7 +376,7 @@
                 <div id="teacher-banner-approved" class="hidden bg-emerald-600 text-white p-6 sm:p-8 rounded-2xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                     <div>
                         <div class="flex items-center gap-2 mb-2">
-                            <span class="px-2.5 py-0.5 bg-emerald-500 text-white rounded text-xs font-bold tracking-wide">인증된 교사 대시보드</span>
+                            <span class="px-2.5 py-0.5 bg-emerald-50 text-white rounded text-xs font-bold tracking-wide">인증된 교사 대시보드</span>
                             <span id="teacher-class-tag" class="text-xs text-yellow-200 font-medium"></span>
                         </div>
                         <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-yellow-300" id="teacher-welcome-title">선생님, 환영합니다!</h2>
@@ -554,9 +554,6 @@
                                 <span class="w-1.5 h-3.5 bg-emerald-600 rounded-full"></span>
                                 하루 배움 성찰 일기
                             </h4>
-                            <button id="btn-ai-diary" onclick="window.generateAIDiary()" class="text-xs px-2.5 py-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg shadow-sm hover:from-emerald-600 hover:to-teal-600 transition flex items-center gap-1 hidden">
-                                ✨ AI 도우미
-                            </button>
                         </div>
                         <textarea id="modal-diary-textarea" placeholder="오늘 배운 점, 느낀 점을 자유롭게 기록하세요." rows="4" class="w-full p-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
                     </div>
@@ -570,7 +567,7 @@
                         </h4>
                         <div class="flex gap-2 items-center">
                             <button id="btn-ai-feedback" onclick="window.generateAIFeedback()" class="text-xs px-2.5 py-1 bg-gradient-to-r from-amber-400 to-orange-400 text-amber-900 rounded-lg shadow-sm hover:from-amber-500 hover:to-orange-500 transition flex items-center gap-1 hidden">
-                                ✨ AI 피드백 추천
+                                ✨ AI 도우미
                             </button>
                             <span id="feedback-status" class="text-xs text-slate-400">대기 중</span>
                         </div>
@@ -614,7 +611,6 @@
                             <h4 id="chat-partner-name" class="font-bold text-slate-800">1:1 상담</h4>
                         </div>
                     </div>
-                    <!-- 명확한 닫기 버튼으로 개선 -->
                     <button onclick="window.closeChatModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition duration-150 flex items-center gap-2">
                         <i class="fa-solid fa-xmark"></i> 닫기
                     </button>
@@ -757,39 +753,47 @@
             }
         }
 
-        window.generateAIDiary = async function() {
-            const dayTodos = todosList.filter(t => t.userId === currentViewedUserId && t.date === selectedDateString);
-            const todoTexts = dayTodos.map(t => `- ${t.text} (${t.completed ? '완료' : '미완료'})`).join('\n');
-            
-            const prompt = `초등학생 혹은 중학생의 시점에서 오늘 하루를 되돌아보는 성찰 일기를 3~4문장으로 작성해줘. 다음은 오늘 내가 실천하려고 했던 핵심 할 일 목록과 달성 여부야:\n\n${todoTexts || '특별하게 등록된 할 일이 없었어.'}\n\n이 내용을 바탕으로 오늘 배운 점, 느낀 점, 그리고 내일의 긍정적인 다짐을 포함해서 친근한 일기 형식으로 작성해줘.`;
-            
-            const textarea = document.getElementById('modal-diary-textarea');
-            textarea.value = "✨ AI 도우미가 오늘의 기록을 바탕으로 일기를 고민하고 있습니다...";
-            textarea.disabled = true;
-            
-            const result = await window.callGeminiAPI(prompt);
-            
-            textarea.value = result;
-            textarea.disabled = false;
-        }
-
         window.generateAIFeedback = async function() {
+            const isTeacher = currentProfileData.role === 'teacher';
             const diaryText = document.getElementById('modal-diary-textarea').value.trim();
             if (!diaryText) {
-                window.showAlert("학생이 작성한 일기 내용이 없어 피드백을 추천할 수 없습니다.");
+                window.showAlert("작성된 일기 내용이 없어 AI 피드백을 생성할 수 없습니다. 일기를 먼저 작성해 주세요.");
                 return;
             }
             
             const prompt = `선생님의 입장에서 학생이 작성한 다음 성찰 일기를 읽고, 따뜻하고 긍정적인 격려의 피드백을 2~3문장으로 작성해줘. 칭찬할 점을 구체적으로 언급하고, 학생의 내일을 진심으로 응원하는 다정한 말투로 부탁해.\n\n학생의 일기:\n"${diaryText}"`;
             
-            const textarea = document.getElementById('modal-feedback-textarea');
-            textarea.value = "✨ AI 선생님이 따뜻한 피드백을 고민하고 있습니다...";
-            textarea.disabled = true;
-            
-            const result = await window.callGeminiAPI(prompt);
-            
-            textarea.value = result;
-            textarea.disabled = false;
+            if (isTeacher) {
+                const textarea = document.getElementById('modal-feedback-textarea');
+                textarea.value = "✨ AI 도우미가 따뜻한 피드백을 고민하고 있습니다...";
+                textarea.disabled = true;
+                
+                const result = await window.callGeminiAPI(prompt);
+                
+                textarea.value = result;
+                textarea.disabled = false;
+            } else {
+                const view = document.getElementById('modal-feedback-view');
+                view.innerText = "✨ AI 도우미가 따뜻한 피드백을 고민하고 있습니다...";
+                
+                const result = await window.callGeminiAPI(prompt);
+                view.innerText = result;
+                
+                const statusSpan = document.getElementById('feedback-status');
+                statusSpan.innerText = "AI 피드백 완료";
+                statusSpan.className = "text-xs font-bold text-emerald-600";
+                
+                const existingDiary = diariesList.find(d => d.userId === currentViewedUserId && d.date === selectedDateString);
+                if (existingDiary) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'diaries', existingDiary.id), { feedback: result });
+                    window.showToast("AI 도우미의 피드백이 도착했습니다!");
+                } else {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'diaries'), {
+                        userId: currentViewedUserId, date: selectedDateString, content: diaryText, feedback: result, createdAt: new Date().toISOString()
+                    });
+                    window.showToast("일기와 AI 피드백이 함께 저장되었습니다!");
+                }
+            }
         }
 
         const initAuth = async () => {
@@ -1331,23 +1335,34 @@
 
         window.renderAvailableStudentsList = function() {
             const allStudents = usersList.filter(u => u && u.role === 'student');
-            // 같은 학교 학생만 필터링
-            let schoolStudents = allStudents.filter(s => s.school === currentProfileData.school);
             
-            // 선생님이 담당하는 학년의 학생만 필터링 (전학년 공통인 경우 제외)
+            // 1. 학교명 필터링 (공백 제거, 학교 정보가 없는 과거 데이터 허용)
+            const mySchool = (currentProfileData.school || "").replace(/\s/g, "");
+            let schoolStudents = allStudents.filter(s => {
+                const studentSchool = (s.school || "").replace(/\s/g, "");
+                // 학교명이 일치하거나, 학생의 학교 정보가 아예 비어있는 경우 목록에 표시
+                return studentSchool === mySchool || studentSchool === "";
+            });
+            
+            // 2. 선생님이 담당하는 학년의 학생만 필터링 (전학년 공통인 경우 제외)
             let gradeStudents = schoolStudents;
             if(currentProfileData.grade !== 'all') {
-                gradeStudents = schoolStudents.filter(s => s.grade === currentProfileData.grade);
+                gradeStudents = schoolStudents.filter(s => String(s.grade) === String(currentProfileData.grade));
             }
-            // 미연결 학생만 표시
+            
+            // 3. 미연결 학생만 표시
             const unmatchedStudents = gradeStudents.filter(s => !s.matchedTeacherId);
 
-            const searchName = document.getElementById('search-student-name').value.trim().toLowerCase();
-            const filterGrade = document.getElementById('filter-student-grade').value;
+            // 검색창 및 화면 내 학년 필터 적용
+            const searchInput = document.getElementById('search-student-name');
+            const gradeFilterInput = document.getElementById('filter-student-grade');
+            
+            const searchName = searchInput ? searchInput.value.trim().toLowerCase() : "";
+            const filterGrade = gradeFilterInput ? gradeFilterInput.value : "all";
 
             const filtered = unmatchedStudents.filter(s => {
-                const matchesName = s.name.toLowerCase().includes(searchName);
-                const matchesGrade = filterGrade === 'all' || s.grade === filterGrade;
+                const matchesName = (s.name || "").toLowerCase().includes(searchName);
+                const matchesGrade = filterGrade === 'all' || String(s.grade) === String(filterGrade);
                 return matchesName && matchesGrade;
             });
 
@@ -1355,8 +1370,10 @@
             filtered.sort((a,b) => parseInt(a.studentNo || 0) - parseInt(b.studentNo || 0));
 
             const availableContainer = document.getElementById('available-students-list');
+            if (!availableContainer) return;
+            
             if (filtered.length === 0) {
-                availableContainer.innerHTML = `<div class="col-span-full py-8 text-center text-slate-400 text-xs bg-slate-50 border border-slate-100 rounded-xl">요청할 수 있는 학생이 없습니다.</div>`;
+                availableContainer.innerHTML = `<div class="col-span-full py-8 text-center text-slate-400 text-xs bg-slate-50 border border-slate-100 rounded-xl">요청할 수 있는 학생이 없습니다.<br>(선생님과 같은 소속 학교/학년의 학생만 표시됩니다.)</div>`;
             } else {
                 availableContainer.innerHTML = filtered.map(s => {
                     let btnHtml = '';
@@ -1468,26 +1485,35 @@
                 const dayDiv = document.createElement('div');
                 let isToday = (year === today.getFullYear() && month === today.getMonth() && day === today.getDate());
                 
-                dayDiv.className = `aspect-square flex flex-col items-center justify-center rounded-xl cursor-pointer transition hover:bg-emerald-50 border ${isToday ? 'border-emerald-400 bg-emerald-50 text-emerald-700 font-bold' : 'border-slate-100 text-slate-700 bg-white shadow-sm'} relative`;
-                dayDiv.innerHTML = `<span class="text-sm">${day}</span>`;
+                dayDiv.className = `aspect-square flex flex-col items-start justify-start p-1.5 sm:p-2 rounded-xl cursor-pointer transition hover:bg-emerald-50 border ${isToday ? 'border-emerald-400 bg-emerald-50 text-emerald-700 font-bold' : 'border-slate-100 text-slate-700 bg-white shadow-sm'} relative overflow-hidden`;
                 
-                dayDiv.onclick = () => window.openDiaryForDate(dateStr, displayUserId);
+                let cellHtml = `<span class="text-xs sm:text-sm font-semibold">${day}</span>`;
 
                 const dayTodos = todosList.filter(t => t.userId === displayUserId && t.date === dateStr);
                 const dayDiary = diariesList.find(d => d.userId === displayUserId && d.date === dateStr);
                 
-                const indicatorsDiv = document.createElement('div');
-                indicatorsDiv.className = "flex gap-0.5 mt-1";
+                if (dayDiary) {
+                    cellHtml += `<span class="absolute top-2 right-2 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500" title="일기 작성 완료"></span>`;
+                }
                 
                 if (dayTodos.length > 0) {
-                    const allDone = dayTodos.every(t => t.completed);
-                    indicatorsDiv.innerHTML += `<span class="w-1.5 h-1.5 rounded-full ${allDone ? 'bg-emerald-400' : 'bg-amber-400'}"></span>`;
-                }
-                if (dayDiary) {
-                    indicatorsDiv.innerHTML += `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>`;
+                    cellHtml += `<div class="mt-1 flex flex-col gap-0.5 w-full">`;
+                    const maxTodos = 3;
+                    for (let i = 0; i < Math.min(dayTodos.length, maxTodos); i++) {
+                        const t = dayTodos[i];
+                        const bgClass = t.completed ? 'bg-emerald-100 text-emerald-700 line-through decoration-emerald-400' : 'bg-slate-100 text-slate-600';
+                        cellHtml += `<div class="text-[9px] sm:text-[10px] leading-tight truncate px-1 py-0.5 rounded-sm ${bgClass}" title="${t.text}">${t.text}</div>`;
+                    }
+                    if (dayTodos.length > maxTodos) {
+                        cellHtml += `<div class="text-[9px] text-slate-400 pl-1 font-medium">+${dayTodos.length - maxTodos}</div>`;
+                    }
+                    cellHtml += `</div>`;
                 }
                 
-                if(indicatorsDiv.innerHTML !== "") dayDiv.appendChild(indicatorsDiv);
+                dayDiv.innerHTML = cellHtml;
+                
+                dayDiv.onclick = () => window.openDiaryForDate(dateStr, displayUserId);
+
                 calendarGrid.appendChild(dayDiv);
             }
         }
@@ -1521,7 +1547,6 @@
             const feedbackEdit = document.getElementById('modal-feedback-edit-container');
             const btnSave = document.getElementById('btn-save-diary');
             
-            const btnAiDiary = document.getElementById('btn-ai-diary');
             const btnAiFeedback = document.getElementById('btn-ai-feedback');
 
             if (isStudent && isMyDiary) {
@@ -1532,8 +1557,7 @@
                 feedbackEdit.classList.add('hidden');
                 btnSave.classList.remove('hidden');
                 
-                btnAiDiary.classList.remove('hidden');
-                btnAiFeedback.classList.add('hidden');
+                btnAiFeedback.classList.remove('hidden');
             } else { 
                 formTodoAdd.classList.add('hidden');
                 diaryTextarea.disabled = true;
@@ -1542,7 +1566,6 @@
                 feedbackEdit.classList.remove('hidden');
                 btnSave.classList.remove('hidden');
                 
-                btnAiDiary.classList.add('hidden');
                 if (currentProfileData.role === 'teacher') {
                     btnAiFeedback.classList.remove('hidden');
                 } else {
@@ -1562,6 +1585,7 @@
             const userId = currentViewedUserId;
             const dateStr = selectedDateString;
             const isMyDiary = (userId === currentProfileData.uid);
+            const isStudent = currentProfileData?.role === 'student';
 
             const dayTodos = todosList.filter(t => t.userId === userId && t.date === dateStr);
             const todoListContainer = document.getElementById('modal-todo-list');
@@ -1583,6 +1607,7 @@
             const feedbackView = document.getElementById('modal-feedback-view');
             const feedbackTextarea = document.getElementById('modal-feedback-textarea');
             const statusSpan = document.getElementById('feedback-status');
+            const btnAiFeedback = document.getElementById('btn-ai-feedback');
 
             if (dayDiary) {
                 diaryTextarea.value = dayDiary.content || "";
@@ -1591,11 +1616,13 @@
                     feedbackTextarea.value = dayDiary.feedback;
                     statusSpan.innerText = "피드백 완료";
                     statusSpan.className = "text-xs font-bold text-emerald-600";
+                    if (isStudent && isMyDiary) btnAiFeedback.classList.add('hidden');
                 } else {
                     feedbackView.innerText = "아직 선생님의 피드백이 없습니다.";
                     feedbackTextarea.value = "";
                     statusSpan.innerText = "대기 중";
                     statusSpan.className = "text-xs text-amber-500";
+                    if (isStudent && isMyDiary) btnAiFeedback.classList.remove('hidden');
                 }
             } else {
                 diaryTextarea.value = "";
@@ -1603,6 +1630,7 @@
                 feedbackTextarea.value = "";
                 statusSpan.innerText = "미작성";
                 statusSpan.className = "text-xs text-slate-400";
+                if (isStudent && isMyDiary) btnAiFeedback.classList.remove('hidden');
             }
         }
 
