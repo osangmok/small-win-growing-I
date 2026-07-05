@@ -688,6 +688,24 @@
             document.getElementById('custom-alert-modal').classList.add('hidden');
         }
 
+        async function checkUserProfile(uid) {
+            try {
+                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', uid);
+                const userDocSnap = await getDoc(userDocRef);
+
+                if (userDocSnap.exists()) {
+                    currentProfileData = userDocSnap.data();
+                    showAppDashboard();
+                    startGlobalListeners();
+                } else {
+                    showAuthView();
+                }
+            } catch (error) {
+                console.error("Profile check error:", error);
+                showAuthView();
+            }
+        }
+
         const initAuth = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -704,7 +722,7 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentAuthUser = user;
-                // session persistence info handling if needed
+                await checkUserProfile(user.uid);
             } else {
                 clearAllListeners();
                 currentAuthUser = null;
