@@ -1712,6 +1712,20 @@
         // ==========================================
         // CHAT 
         // ==========================================
+        window.updateChatNotifications = function() {
+            if (!currentProfileData) return;
+            const lastReadTime = localStorage.getItem('chatLastRead_' + currentProfileData.uid) || '1970-01-01T00:00:00.000Z';
+            const hasUnread = chatsList.some(c => c.receiverId === currentProfileData.uid && c.time > lastReadTime);
+            
+            if (currentProfileData.role === 'student') {
+                const bell = document.getElementById('student-chat-bell');
+                if (bell) hasUnread ? bell.classList.remove('hidden') : bell.classList.add('hidden');
+            } else if (currentProfileData.role === 'teacher') {
+                const bell = document.getElementById('teacher-chat-bell');
+                if (bell) hasUnread ? bell.classList.remove('hidden') : bell.classList.add('hidden');
+            }
+        }
+
         window.openChatModal = function() {
             document.getElementById('chat-modal').classList.remove('hidden');
             
