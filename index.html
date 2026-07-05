@@ -376,7 +376,7 @@
                 <div id="teacher-banner-approved" class="hidden bg-emerald-600 text-white p-6 sm:p-8 rounded-2xl shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                     <div>
                         <div class="flex items-center gap-2 mb-2">
-                            <span class="px-2.5 py-0.5 bg-emerald-505 text-white rounded text-xs font-bold tracking-wide">인증된 교사 대시보드</span>
+                            <span class="px-2.5 py-0.5 bg-emerald-500 text-white rounded text-xs font-bold tracking-wide">인증된 교사 대시보드</span>
                             <span id="teacher-class-tag" class="text-xs text-yellow-200 font-medium"></span>
                         </div>
                         <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-yellow-300" id="teacher-welcome-title">선생님, 환영합니다!</h2>
@@ -511,6 +511,39 @@
 
         </div>
     </main>
+
+    <!-- TEACHER STUDENT CALENDAR MODAL (새로 추가됨) -->
+    <div id="student-calendar-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl transition duration-300 transform scale-95">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-3">
+                    <span class="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                        <i class="fa-regular fa-calendar-days text-lg"></i>
+                    </span>
+                    <div>
+                        <h3 id="ts-modal-title" class="text-lg font-bold text-slate-800">학생 이름</h3>
+                        <p class="text-xs text-slate-500">날짜를 선택하여 다이어리를 확인하세요.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm">
+                        <button onclick="window.changeTsMonth(-1)" class="p-1.5 hover:bg-slate-50 rounded-lg transition text-slate-600"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                        <span id="ts-calendar-month-year" class="px-3 text-sm font-bold text-slate-800 min-w-[100px] text-center">2026년 7월</span>
+                        <button onclick="window.changeTsMonth(1)" class="p-1.5 hover:bg-slate-50 rounded-lg transition text-slate-600"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                    </div>
+                    <button onclick="window.closeStudentCalendarModal()" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-xl transition">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6 overflow-y-auto flex-grow bg-slate-50">
+                <div class="grid grid-cols-7 gap-1 text-center font-semibold text-xs text-slate-500 mb-3">
+                    <div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div>
+                </div>
+                <div id="ts-calendar-grid" class="grid grid-cols-7 gap-2"></div>
+            </div>
+        </div>
+    </div>
 
     <!-- CALENDAR DAY DETAIL & DIARY DIALOG -->
     <div id="diary-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
@@ -753,7 +786,6 @@
             }
         }
 
-        // 일기 기록을 기반으로 AI 피드백을 중복 및 다채롭게 생성해주는 기능
         window.generateAIFeedback = async function() {
             const diaryText = document.getElementById('modal-diary-textarea').value.trim();
             if (!diaryText) {
@@ -762,7 +794,7 @@
             }
             
             const isTeacher = currentProfileData.role === 'teacher';
-            const randomVal = Math.floor(Math.random() * 1000); // 매번 다른 피드백 스타일을 유도하기 위한 난수 추가
+            const randomVal = Math.floor(Math.random() * 1000); 
             const prompt = `선생님의 입장에서 학생이 작성한 다음 성찰 일기를 읽고, 따뜻하고 긍정적인 격려의 피드백을 2~3문장으로 작성해줘. 학생의 노력이나 배움을 구체적으로 언급하고 힘을 실어줘. 존댓말과 정답고 친근한 교사의 다정한 어조를 사용하고, 이전 피드백과 겹치지 않게 개성 있는 피드백을 만들어줘 (코드: ${randomVal}).\n\n학생의 일기:\n"${diaryText}"`;
             
             if (isTeacher) {
@@ -895,7 +927,6 @@
                     tNameElem.innerText = currentProfileData.matchedTeacherName + " 선생님";
                     tInfoElem.innerText = "나의 일기를 확인하고 따뜻한 피드백을 남겨주십니다.";
                 } else if (currentProfileData.pendingTeacherId) {
-                    // 매칭 요청 알림 표시 (반짝이는 종)
                     tNameElem.innerHTML = `선생님 연결 요청 도착! <i class="fa-solid fa-bell text-amber-500 animate-bounce"></i>`;
                     tInfoElem.innerText = `${currentProfileData.pendingTeacherName} 선생님이 내 학생으로 등록하려 합니다.`;
                     tActionsElem.classList.remove('hidden');
@@ -904,7 +935,6 @@
                     tInfoElem.innerText = "선생님이 연결을 요청하면 수락할 수 있습니다.";
                 }
             }
-            // 업데이트 시 알림 아이콘도 재확인
             window.updateChatNotifications();
         }
 
@@ -1137,12 +1167,16 @@
                     todosList.push(data);
                 });
                 
-                // 모달창이 열려있다면 할 일 리스트를 즉시 새 데이터로 갱신해 줍니다.
                 if (!document.getElementById('diary-modal').classList.contains('hidden')) {
                     window.renderModalContent();
                 }
                 
                 if (currentProfileData.role === 'student' || currentViewedUserId) window.renderCalendar(currentViewedUserId);
+
+                // 교사용 캘린더 모달 실시간 업데이트
+                if (document.getElementById('student-calendar-modal') && !document.getElementById('student-calendar-modal').classList.contains('hidden')) {
+                    window.renderTsCalendar();
+                }
             }, (error) => console.error(error)));
 
             const diariesQuery = collection(db, 'artifacts', appId, 'public', 'data', 'diaries');
@@ -1154,7 +1188,17 @@
                     data.id = doc.id;
                     diariesList.push(data);
                 });
+                
+                if (!document.getElementById('diary-modal').classList.contains('hidden')) {
+                    window.renderModalContent();
+                }
+
                 if (currentProfileData.role === 'student' || currentViewedUserId) window.renderCalendar(currentViewedUserId);
+
+                // 교사용 캘린더 모달 실시간 업데이트
+                if (document.getElementById('student-calendar-modal') && !document.getElementById('student-calendar-modal').classList.contains('hidden')) {
+                    window.renderTsCalendar();
+                }
             }, (error) => console.error(error)));
 
             const goalsQuery = collection(db, 'artifacts', appId, 'public', 'data', 'goals');
@@ -1192,13 +1236,10 @@
                 });
                 chatsList.sort((a, b) => new Date(a.time) - new Date(b.time));
                 
-                // 만약 현재 채팅창이 열려있다면 즉시 읽음 처리로 간주
                 if (!document.getElementById('chat-modal').classList.contains('hidden')) {
                     localStorage.setItem('chatLastRead_' + currentProfileData.uid, new Date().toISOString());
                     window.renderChatMessages();
                 }
-                
-                // 알림 종모양 업데이트
                 window.updateChatNotifications();
                 
             }, (error) => console.error(error)));
@@ -1289,7 +1330,6 @@
             if (myStudents.length === 0) {
                 matchedList.innerHTML = `<div class="col-span-full p-6 text-center bg-slate-50 border border-slate-100 rounded-2xl text-slate-400 text-sm">연결된 학생이 없습니다. 우측에서 연결을 요청해 보세요.</div>`;
             } else {
-                // 학생 번호순 정렬
                 myStudents.sort((a,b) => parseInt(a.studentNo || 0) - parseInt(b.studentNo || 0));
                 
                 matchedList.innerHTML = myStudents.map(s => {
@@ -1319,24 +1359,19 @@
         window.renderAvailableStudentsList = function() {
             const allStudents = usersList.filter(u => u && u.role === 'student');
             
-            // 1. 학교명 필터링 (공백 제거, 학교 정보가 없는 과거 데이터 허용)
             const mySchool = (currentProfileData.school || "").replace(/\s/g, "");
             let schoolStudents = allStudents.filter(s => {
                 const studentSchool = (s.school || "").replace(/\s/g, "");
-                // 학교명이 일치하거나, 학생의 학교 정보가 아예 비어있는 경우 목록에 표시
                 return studentSchool === mySchool || studentSchool === "";
             });
             
-            // 2. 선생님이 담당하는 학년의 학생만 필터링 (전학년 공통인 경우 제외)
             let gradeStudents = schoolStudents;
             if(currentProfileData.grade !== 'all') {
                 gradeStudents = schoolStudents.filter(s => String(s.grade) === String(currentProfileData.grade));
             }
             
-            // 3. 미연결 학생만 표시
             const unmatchedStudents = gradeStudents.filter(s => !s.matchedTeacherId);
 
-            // 검색창 및 화면 내 학년 필터 적용
             const searchInput = document.getElementById('search-student-name');
             const gradeFilterInput = document.getElementById('filter-student-grade');
             
@@ -1349,7 +1384,6 @@
                 return matchesName && matchesGrade;
             });
 
-            // 학생 번호순 정렬
             filtered.sort((a,b) => parseInt(a.studentNo || 0) - parseInt(b.studentNo || 0));
 
             const availableContainer = document.getElementById('available-students-list');
@@ -1501,6 +1535,11 @@
             }
         }
 
+        // 교사용: 학생 성찰 캘린더 모달 제어 변수 및 함수
+        let tsCurrentDate = new Date();
+        let tsCurrentStudentUid = null;
+        let tsCurrentStudentName = null;
+
         window.openStudentCalendarModal = function(studentUid, studentName) {
             const targetStudent = usersList.find(u => u.uid === studentUid);
             if (!targetStudent || targetStudent.matchedTeacherId !== currentProfileData.uid) {
@@ -1508,10 +1547,82 @@
                 return;
             }
 
-            currentViewedUserId = studentUid;
-            currentDate = new Date(); 
-            const todayStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
-            window.openDiaryForDate(todayStr, studentUid, studentName);
+            tsCurrentStudentUid = studentUid;
+            tsCurrentStudentName = studentName;
+            tsCurrentDate = new Date(); // 캘린더 오픈 시 항상 현재 달력 기준으로 세팅
+            
+            document.getElementById('ts-modal-title').innerText = `${studentName} 학생의 성찰 캘린더`;
+            document.getElementById('student-calendar-modal').classList.remove('hidden');
+            
+            window.renderTsCalendar();
+        }
+
+        window.closeStudentCalendarModal = function() {
+            document.getElementById('student-calendar-modal').classList.add('hidden');
+            tsCurrentStudentUid = null;
+            tsCurrentStudentName = null;
+        }
+
+        window.changeTsMonth = function(offset) {
+            tsCurrentDate.setMonth(tsCurrentDate.getMonth() + offset);
+            window.renderTsCalendar();
+        }
+
+        window.renderTsCalendar = function() {
+            if (!tsCurrentStudentUid) return;
+            const calendarGrid = document.getElementById('ts-calendar-grid');
+            if (!calendarGrid) return;
+            calendarGrid.innerHTML = "";
+
+            const year = tsCurrentDate.getFullYear();
+            const month = tsCurrentDate.getMonth();
+            document.getElementById('ts-calendar-month-year').innerText = `${year}년 ${month + 1}월`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+
+            for (let i = 0; i < firstDay; i++) {
+                calendarGrid.appendChild(document.createElement('div'));
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayDiv = document.createElement('div');
+                let isToday = (year === today.getFullYear() && month === today.getMonth() && day === today.getDate());
+                
+                dayDiv.className = `aspect-square flex flex-col items-start justify-start p-1.5 sm:p-2 rounded-xl cursor-pointer transition hover:bg-emerald-50 border ${isToday ? 'border-emerald-400 bg-emerald-50 text-emerald-700 font-bold' : 'border-slate-100 text-slate-700 bg-white shadow-sm'} relative overflow-hidden`;
+                
+                let cellHtml = `<span class="text-xs sm:text-sm font-semibold">${day}</span>`;
+
+                const dayTodos = todosList.filter(t => t.userId === tsCurrentStudentUid && t.date === dateStr);
+                const dayDiary = diariesList.find(d => d.userId === tsCurrentStudentUid && d.date === dateStr);
+                
+                if (dayDiary) {
+                    cellHtml += `<span class="absolute top-2 right-2 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500" title="일기 작성 완료"></span>`;
+                }
+                
+                if (dayTodos.length > 0) {
+                    cellHtml += `<div class="mt-1 flex flex-col gap-0.5 w-full">`;
+                    const maxTodos = 3;
+                    for (let i = 0; i < Math.min(dayTodos.length, maxTodos); i++) {
+                        const t = dayTodos[i];
+                        const bgClass = t.completed ? 'bg-emerald-100 text-emerald-700 line-through decoration-emerald-400' : 'bg-slate-100 text-slate-600';
+                        cellHtml += `<div class="text-[9px] sm:text-[10px] leading-tight truncate px-1 py-0.5 rounded-sm ${bgClass}" title="${t.text}">${t.text}</div>`;
+                    }
+                    if (dayTodos.length > maxTodos) {
+                        cellHtml += `<div class="text-[9px] text-slate-400 pl-1 font-medium">+${dayTodos.length - maxTodos}</div>`;
+                    }
+                    cellHtml += `</div>`;
+                }
+                
+                dayDiv.innerHTML = cellHtml;
+                
+                // 날짜 클릭 시 다이어리 열기
+                dayDiv.onclick = () => window.openDiaryForDate(dateStr, tsCurrentStudentUid, tsCurrentStudentName);
+
+                calendarGrid.appendChild(dayDiv);
+            }
         }
 
         window.openDiaryForDate = function(dateStr, userId, userName = "") {
@@ -1599,7 +1710,6 @@
                     feedbackTextarea.value = dayDiary.feedback;
                     statusSpan.innerText = "피드백 완료";
                     statusSpan.className = "text-xs font-bold text-emerald-600";
-                    // 피드백 완료 상태여도 새로운 조언을 다시 받아볼 수 있도록 항상 버튼 노출 유지
                     if (isStudent && isMyDiary) btnAiFeedback.classList.remove('hidden');
                 } else {
                     feedbackView.innerText = "아직 선생님의 피드백이 없습니다.";
@@ -1729,7 +1839,6 @@
         window.openChatModal = function() {
             document.getElementById('chat-modal').classList.remove('hidden');
             
-            // 알림 확인 시간 갱신
             localStorage.setItem('chatLastRead_' + currentProfileData.uid, new Date().toISOString());
             window.updateChatNotifications();
 
