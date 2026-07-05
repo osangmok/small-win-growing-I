@@ -121,12 +121,12 @@
                 <!-- Login Form -->
                 <form id="form-login" onsubmit="handleLogin(event)" class="space-y-5">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">아이디 (ID)</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">아이디 / 이메일</label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                                 <i class="fa-regular fa-user"></i>
                             </span>
-                            <input type="text" id="login-id" required class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" placeholder="아이디를 입력하세요">
+                            <input type="text" id="login-id" required class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" placeholder="학생은 아이디, 교사는 이메일 입력">
                         </div>
                     </div>
                     <div>
@@ -156,10 +156,17 @@
                             </label>
                         </div>
                     </div>
-                    <div>
+                    
+                    <div id="register-id-container">
                         <label class="block text-sm font-medium text-slate-700 mb-1">아이디 (ID)</label>
                         <input type="text" id="register-id" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" placeholder="사용할 아이디 (영문/숫자)">
                     </div>
+
+                    <div id="register-email-container" class="hidden">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">이메일 주소</label>
+                        <input type="email" id="register-email" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" placeholder="선생님 이메일을 입력해 주세요">
+                    </div>
+
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">비밀번호</label>
                         <input type="password" id="register-password" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition" placeholder="6자리 이상 비밀번호">
@@ -219,7 +226,7 @@
 
                     <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-xs text-emerald-800 space-y-1">
                         <p class="font-bold"><i class="fa-solid fa-circle-info"></i> 이용 안내</p>
-                        <p>학생은 가입 후 아이디로 즉시 이용할 수 있으며, 교사는 관리자 승인 후 학생에게 연결을 요청할 수 있습니다.</p>
+                        <p>학생은 아이디로 간편하게, 선생님은 이메일로 안전하게 가입해 주세요. 가입 후 선생님과 연결될 수 있습니다.</p>
                     </div>
 
                     <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-100 transition duration-150">회원가입 완료</button>
@@ -804,17 +811,32 @@
             const teacherFields = document.getElementById('fields-teacher');
             const lblStudent = document.getElementById('lbl-role-student');
             const lblTeacher = document.getElementById('lbl-role-teacher');
+            
+            const idContainer = document.getElementById('register-id-container');
+            const emailContainer = document.getElementById('register-email-container');
+            const idInput = document.getElementById('register-id');
+            const emailInput = document.getElementById('register-email');
 
             if (role === 'student') {
                 studentFields.classList.remove('hidden');
                 teacherFields.classList.add('hidden');
                 lblStudent.className = "flex items-center justify-center gap-2 p-3 rounded-xl border border-emerald-600 bg-emerald-50/50 cursor-pointer transition";
                 lblTeacher.className = "flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 cursor-pointer transition hover:bg-slate-50";
+                
+                idContainer.classList.remove('hidden');
+                emailContainer.classList.add('hidden');
+                idInput.required = true;
+                emailInput.required = false;
             } else {
                 studentFields.classList.add('hidden');
                 teacherFields.classList.remove('hidden');
                 lblTeacher.className = "flex items-center justify-center gap-2 p-3 rounded-xl border border-emerald-600 bg-emerald-50/50 cursor-pointer transition";
                 lblStudent.className = "flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 cursor-pointer transition hover:bg-slate-50";
+                
+                idContainer.classList.add('hidden');
+                emailContainer.classList.remove('hidden');
+                idInput.required = false;
+                emailInput.required = true;
             }
         }
 
@@ -833,24 +855,29 @@
 
         window.handleRegister = async function(e) {
             e.preventDefault();
-            const inputId = document.getElementById('register-id').value.trim();
             const password = document.getElementById('register-password').value;
             const name = document.getElementById('register-name').value.trim();
             const school = document.getElementById('register-school').value.trim();
             const role = document.querySelector('input[name="register-role"]:checked').value;
 
-            if (inputId.length < 3) {
-                showAlert("아이디는 최소 3자리 이상 입력하세요.");
-                return;
+            let userDocId = "";
+            let displayId = "";
+
+            if (role === 'student') {
+                const inputId = document.getElementById('register-id').value.trim();
+                if (inputId.length < 3) return showAlert("아이디는 최소 3자리 이상 입력하세요.");
+                userDocId = inputId.replace(/[^a-zA-Z0-9]/g, "");
+                if (userDocId === "") return showAlert("아이디는 영문과 숫자 조합으로 입력해 주세요.");
+                displayId = inputId;
+            } else {
+                const inputEmail = document.getElementById('register-email').value.trim();
+                if (!inputEmail.includes('@')) return showAlert("올바른 이메일 형식을 입력해 주세요.");
+                userDocId = btoa(inputEmail).replace(/=/g, "");
+                displayId = inputEmail;
             }
+
             if (password.length < 6) {
                 showAlert("비밀번호는 최소 6자리 이상으로 설정해 주세요.");
-                return;
-            }
-            
-            const userDocId = inputId.replace(/[^a-zA-Z0-9]/g, "");
-            if(userDocId === "") {
-                showAlert("아이디는 영문과 숫자 조합으로 입력해 주세요.");
                 return;
             }
 
@@ -859,19 +886,19 @@
                 const checkSnap = await getDoc(userDocRef);
 
                 if (checkSnap.exists()) {
-                    showAlert("이미 동일한 아이디가 존재합니다. 다른 아이디를 사용해 주세요.");
+                    showAlert("이미 동일한 계정 정보가 존재합니다. 다른 아이디나 이메일을 사용해 주세요.");
                     return;
                 }
 
                 let finalRole = role;
                 let isApproved = false;
-                if (inputId.toLowerCase().startsWith('admin') || name === '어드민' || name === '관리자') {
+                if (displayId.toLowerCase().startsWith('admin') || name === '어드민' || name === '관리자') {
                     finalRole = 'admin';
                 }
 
                 const newProfile = {
                     uid: userDocId,
-                    displayId: inputId,
+                    displayId: displayId,
                     name: name,
                     school: school,
                     role: finalRole,
@@ -905,16 +932,22 @@
             e.preventDefault();
             const inputId = document.getElementById('login-id').value.trim();
             const password = document.getElementById('login-password').value;
-            const userDocId = inputId.replace(/[^a-zA-Z0-9]/g, "");
+            
+            if(inputId === "") return showAlert("아이디 또는 이메일을 입력하세요.");
 
-            if(userDocId === "") return showAlert("올바른 아이디를 입력하세요.");
+            let userDocId = "";
+            if (inputId.includes('@')) {
+                userDocId = btoa(inputId).replace(/=/g, "");
+            } else {
+                userDocId = inputId.replace(/[^a-zA-Z0-9]/g, "");
+            }
 
             try {
                 const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', userDocId);
                 const snap = await getDoc(userDocRef);
 
                 if (!snap.exists() || snap.data().password !== password) {
-                    showAlert("아이디가 존재하지 않거나 비밀번호가 틀렸습니다.");
+                    showAlert("계정 정보가 없거나 비밀번호가 틀렸습니다.");
                     return;
                 }
 
@@ -941,6 +974,7 @@
             document.getElementById('login-id').value = "";
             document.getElementById('login-password').value = "";
             document.getElementById('register-id').value = "";
+            document.getElementById('register-email').value = "";
             document.getElementById('register-password').value = "";
             document.getElementById('register-name').value = "";
             document.getElementById('register-school').value = "";
